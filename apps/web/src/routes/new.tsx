@@ -69,13 +69,17 @@ function NewSessionPage() {
       <div className="max-w-3xl mx-auto">
         <Card className="shadow-lg border-0">
           <CardHeader>
-            <CardTitle className="text-3xl sm:text-4xl">新規セッション作成</CardTitle>
-            <CardDescription>傾斜付き割り勘のセッションを作成します</CardDescription>
+            <CardTitle className="text-2xl sm:text-4xl">新規セッション作成</CardTitle>
+            <CardDescription className="text-sm sm:text-base">
+              傾斜付き割り勘のセッションを作成します
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
               <div className="space-y-1.5 sm:space-y-2">
-                <Label htmlFor="title">タイトル（任意）</Label>
+                <Label htmlFor="title" className="text-sm sm:text-base">
+                  タイトル（任意）
+                </Label>
                 <Input
                   id="title"
                   type="text"
@@ -86,7 +90,7 @@ function NewSessionPage() {
               </div>
 
               <div className="space-y-1.5 sm:space-y-2">
-                <Label htmlFor="totalAmount">
+                <Label htmlFor="totalAmount" className="text-sm sm:text-base">
                   合計金額（円）<span className="text-destructive">*</span>
                 </Label>
                 <Input
@@ -103,7 +107,7 @@ function NewSessionPage() {
               </div>
 
               <div className="space-y-2 sm:space-y-3">
-                <Label>
+                <Label className="text-sm sm:text-base">
                   参加者 <span className="text-destructive">*</span>
                 </Label>
                 <div className="space-y-2 sm:space-y-3">
@@ -173,7 +177,9 @@ function NewSessionPage() {
               </div>
 
               <div className="space-y-1.5 sm:space-y-2">
-                <Label htmlFor="messageTemplate">通知メッセージ（任意）</Label>
+                <Label htmlFor="messageTemplate" className="text-sm sm:text-base">
+                  通知メッセージ（任意）
+                </Label>
                 <Textarea
                   id="messageTemplate"
                   rows={3}
@@ -194,7 +200,10 @@ function NewSessionPage() {
                     setFormData({ ...formData, attachDetailsLink: checked === true })
                   }
                 />
-                <Label htmlFor="attachDetailsLink" className="text-sm font-normal cursor-pointer">
+                <Label
+                  htmlFor="attachDetailsLink"
+                  className="text-xs sm:text-sm font-normal cursor-pointer"
+                >
                   計算方法の説明リンクを添付
                 </Label>
               </div>

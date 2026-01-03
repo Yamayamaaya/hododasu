@@ -60,10 +60,10 @@ function ResultPage() {
       <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
         <Card className="shadow-lg border-0">
           <CardHeader>
-            <CardTitle className="text-3xl sm:text-4xl">{session.title || '無題のセッション'}</CardTitle>
-            <CardDescription className="text-lg">
+            <CardTitle className="text-2xl sm:text-4xl">{session.title || '無題のセッション'}</CardTitle>
+            <CardDescription className="text-sm sm:text-lg">
               合計金額:{' '}
-              <span className="text-2xl font-bold text-primary">
+              <span className="text-xl sm:text-2xl font-bold text-primary">
                 {session.totalAmount.toLocaleString()}円
               </span>
             </CardDescription>
@@ -73,7 +73,7 @@ function ResultPage() {
         {hasResults ? (
           <Card className="shadow-lg border-0">
             <CardHeader>
-              <CardTitle className="text-2xl">計算結果</CardTitle>
+              <CardTitle className="text-xl sm:text-2xl">計算結果</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 sm:space-y-4">
               {session.participants.map((p) => {
@@ -82,10 +82,10 @@ function ResultPage() {
                   <div key={p.id} className="bg-muted/30 hover:bg-muted/50 transition-colors rounded-lg p-3 sm:p-4">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-lg">{p.name}</span>
-                          <Badge variant="secondary">傾斜: {p.weight}</Badge>
+                          <span className="font-semibold text-base sm:text-lg">{p.name}</span>
+                          <Badge variant="secondary" className="text-xs">傾斜: {p.weight}</Badge>
                         </div>
-                        <div className="text-2xl sm:text-3xl font-bold text-primary">
+                        <div className="text-xl sm:text-3xl font-bold text-primary">
                           {p.shareAmount.toLocaleString()}円
                         </div>
                       </div>
@@ -93,9 +93,9 @@ function ResultPage() {
                 );
               })}
               <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t">
-                <div className="flex justify-between items-center text-xl font-bold">
+                <div className="flex justify-between items-center text-lg sm:text-xl font-bold">
                   <span>合計</span>
-                  <span className="text-primary text-2xl">
+                  <span className="text-primary text-xl sm:text-2xl">
                     {totalShare.toLocaleString()}円
                   </span>
                 </div>
@@ -105,7 +105,7 @@ function ResultPage() {
         ) : (
           <Card className="shadow-lg border-0">
             <CardContent className="pt-4 sm:pt-6">
-              <div className="text-center text-muted-foreground py-6 sm:py-8">
+              <div className="text-center text-sm sm:text-base text-muted-foreground py-6 sm:py-8">
                 計算結果がまだありません
               </div>
             </CardContent>

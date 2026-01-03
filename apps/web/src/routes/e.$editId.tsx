@@ -139,13 +139,13 @@ function EditSessionPage() {
 
         <Card className="shadow-lg border-0">
           <CardHeader>
-            <CardTitle className="text-3xl sm:text-4xl">{session.title}</CardTitle>
-            <CardDescription>セッションの編集と計算結果の確認</CardDescription>
+            <CardTitle className="text-2xl sm:text-4xl">{session.title}</CardTitle>
+            <CardDescription className="text-sm sm:text-base">セッションの編集と計算結果の確認</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
               <div className="space-y-1.5 sm:space-y-2">
-                <Label htmlFor="title">
+                <Label htmlFor="title" className="text-sm sm:text-base">
                   タイトル <span className="text-destructive">*</span>
                 </Label>
                 <Input
@@ -158,7 +158,7 @@ function EditSessionPage() {
               </div>
 
               <div className="space-y-1.5 sm:space-y-2">
-                <Label htmlFor="totalAmount">
+                <Label htmlFor="totalAmount" className="text-sm sm:text-base">
                   合計金額（円）<span className="text-destructive">*</span>
                 </Label>
                 <Input
@@ -177,7 +177,7 @@ function EditSessionPage() {
               </div>
 
               <div className="space-y-2 sm:space-y-3">
-                <Label>
+                <Label className="text-sm sm:text-base">
                   参加者 <span className="text-destructive">*</span>
                 </Label>
                 <div className="space-y-2 sm:space-y-3">
@@ -239,7 +239,7 @@ function EditSessionPage() {
               </div>
 
               <div className="space-y-1.5 sm:space-y-2">
-                <Label htmlFor="messageTemplate">通知メッセージ（任意）</Label>
+                <Label htmlFor="messageTemplate" className="text-sm sm:text-base">通知メッセージ（任意）</Label>
                 <Textarea
                   id="messageTemplate"
                   rows={3}
@@ -260,7 +260,7 @@ function EditSessionPage() {
                     setFormData({ ...currentData, attachDetailsLink: checked === true })
                   }
                 />
-                <Label htmlFor="attachDetailsLink" className="text-sm font-normal cursor-pointer">
+                <Label htmlFor="attachDetailsLink" className="text-xs sm:text-sm font-normal cursor-pointer">
                   計算方法の説明リンクを添付
                 </Label>
               </div>
@@ -276,7 +276,7 @@ function EditSessionPage() {
         {session.participants.some((p) => p.shareAmount !== null) && (
           <Card className="shadow-lg border-0">
             <CardHeader>
-              <CardTitle className="text-2xl">計算結果</CardTitle>
+              <CardTitle className="text-xl sm:text-2xl">計算結果</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 sm:space-y-4">
               {session.participants.map((p) => {
@@ -297,10 +297,10 @@ function EditSessionPage() {
                   <div key={p.id} className="bg-muted/30 rounded-lg p-3 sm:p-4 space-y-3 sm:space-y-4">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-2">
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-lg">{p.name}</span>
-                        <Badge variant="secondary">傾斜: {p.weight}</Badge>
+                        <span className="font-semibold text-base sm:text-lg">{p.name}</span>
+                        <Badge variant="secondary" className="text-xs">傾斜: {p.weight}</Badge>
                       </div>
-                      <div className="text-xl sm:text-2xl font-bold text-primary">
+                      <div className="text-lg sm:text-2xl font-bold text-primary">
                         {p.shareAmount.toLocaleString()}円
                       </div>
                     </div>
@@ -317,9 +317,9 @@ function EditSessionPage() {
                 );
               })}
               <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t">
-                <div className="flex justify-between items-center text-lg font-bold">
+                <div className="flex justify-between items-center text-base sm:text-lg font-bold">
                   <span>合計</span>
-                  <span className="text-primary text-xl">
+                  <span className="text-primary text-lg sm:text-xl">
                     {session.participants
                       .reduce((sum, p) => sum + (p.shareAmount || 0), 0)
                       .toLocaleString()}

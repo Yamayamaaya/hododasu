@@ -20,19 +20,19 @@ function HowPage() {
 
         <Card className="shadow-lg border-0">
           <CardHeader>
-            <CardTitle className="text-3xl sm:text-4xl">計算方法について</CardTitle>
+            <CardTitle className="text-2xl sm:text-4xl">計算方法について</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6 sm:space-y-8">
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-2xl font-semibold">傾斜付き割り勘の計算方法</h2>
-              <p className="text-muted-foreground leading-relaxed">
+              <h2 className="text-xl sm:text-2xl font-semibold">傾斜付き割り勘の計算方法</h2>
+              <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
                 Hododasuでは、各参加者に設定された「傾斜」に基づいて負担額を計算します。
               </p>
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h3 className="text-xl font-semibold">計算手順</h3>
-              <ol className="list-decimal list-inside space-y-3 sm:space-y-4 text-foreground">
+              <h3 className="text-lg sm:text-xl font-semibold">計算手順</h3>
+              <ol className="list-decimal list-inside space-y-3 sm:space-y-4 text-sm sm:text-base text-foreground">
                 <li className="leading-relaxed">
                   各参加者の基本負担額を計算します。
                   <div className="mt-2 sm:mt-3 ml-4 sm:ml-6 bg-muted/50 rounded-lg p-3 sm:p-4">
@@ -41,26 +41,26 @@ function HowPage() {
                     </code>
                   </div>
                 </li>
-                <li className="leading-relaxed">基本負担額の小数部を切り捨てます。</li>
-                <li className="leading-relaxed">
+                <li className="text-sm sm:text-base leading-relaxed">基本負担額の小数部を切り捨てます。</li>
+                <li className="text-sm sm:text-base leading-relaxed">
                   切り捨て後の合計と元の合計金額の差（端数）を計算します。
                 </li>
-                <li className="leading-relaxed">
+                <li className="text-sm sm:text-base leading-relaxed">
                   端数を、小数部が大きい順に各参加者に1円ずつ配布します。
                 </li>
               </ol>
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h3 className="text-xl font-semibold">計算例</h3>
+              <h3 className="text-lg sm:text-xl font-semibold">計算例</h3>
               <div className="bg-muted/50 rounded-lg p-4 sm:p-6 space-y-3 sm:space-y-4">
-                  <p className="font-semibold">例：合計金額 1,000円、参加者3人</p>
-                  <ul className="list-disc list-inside space-y-1 text-sm">
+                  <p className="text-sm sm:text-base font-semibold">例：合計金額 1,000円、参加者3人</p>
+                  <ul className="list-disc list-inside space-y-1 text-xs sm:text-sm">
                     <li>参加者A: 傾斜 100</li>
                     <li>参加者B: 傾斜 200</li>
                     <li>参加者C: 傾斜 300</li>
                   </ul>
-                  <div className="mt-3 sm:mt-4 space-y-2 text-sm leading-relaxed">
+                  <div className="mt-3 sm:mt-4 space-y-2 text-xs sm:text-sm leading-relaxed">
                     <p>傾斜の合計: 600</p>
                     <p>参加者Aの基本負担額: (1,000 × 100) ÷ 600 = 166.66...円 → 切り捨て: 166円</p>
                     <p>参加者Bの基本負担額: (1,000 × 200) ÷ 600 = 333.33...円 → 切り捨て: 333円</p>
@@ -79,8 +79,8 @@ function HowPage() {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h3 className="text-xl font-semibold">傾斜について</h3>
-              <p className="text-muted-foreground leading-relaxed">
+              <h3 className="text-lg sm:text-xl font-semibold">傾斜について</h3>
+              <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
                 傾斜は、各参加者の負担の割合を表します。傾斜が大きいほど、負担額も大きくなります。
                 デフォルトは100で、全員が均等に負担する場合は全員の傾斜を100に設定してください。
               </p>
