@@ -1,5 +1,5 @@
 /**
- * 重み方式で各参加者の負担額を計算
+ * 傾斜方式で各参加者の負担額を計算
  * 端数処理：切り捨て後、余りを小数部が大きい順に +1 円配布
  */
 export function calculateShareAmounts(
@@ -10,7 +10,7 @@ export function calculateShareAmounts(
     return [];
   }
 
-  // 重みの合計を計算
+  // 傾斜の合計を計算
   const totalWeight = participants.reduce((sum, p) => sum + p.weight, 0);
   if (totalWeight === 0) {
     throw new Error('Total weight must be greater than 0');

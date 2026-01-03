@@ -3,7 +3,7 @@ import { z } from 'zod';
 // 参加者スキーマ
 export const participantSchema = z.object({
   name: z.string().min(1),
-  weight: z.number().int().min(1).default(1),
+  weight: z.number().int().min(1).default(100),
 });
 
 // セッション作成・更新用スキーマ

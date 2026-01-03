@@ -83,7 +83,7 @@ function ResultPage() {
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-lg">{p.name}</span>
-                          <Badge variant="secondary">重み: {p.weight}</Badge>
+                          <Badge variant="secondary">傾斜: {p.weight}</Badge>
                         </div>
                         <div className="text-2xl sm:text-3xl font-bold text-primary">
                           {p.shareAmount.toLocaleString()}円

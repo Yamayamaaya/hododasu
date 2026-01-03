@@ -108,7 +108,7 @@ function EditSessionPage() {
   const addParticipant = () => {
     setFormData({
       ...currentData,
-      participants: [...currentData.participants, { name: '', weight: 1 }],
+      participants: [...currentData.participants, { name: '', weight: 100 }],
     });
   };
 
@@ -202,16 +202,16 @@ function EditSessionPage() {
                               htmlFor={`weight-${index}`}
                               className="text-xs text-muted-foreground"
                             >
-                              重み
+                              傾斜
                             </Label>
                             <Input
                               id={`weight-${index}`}
                               type="number"
                               min="1"
-                              placeholder="1"
+                              placeholder="100"
                               value={p.weight}
                               onChange={(e) =>
-                                updateParticipant(index, 'weight', parseInt(e.target.value) || 1)
+                                updateParticipant(index, 'weight', parseInt(e.target.value) || 100)
                               }
                               required
                             />
@@ -298,7 +298,7 @@ function EditSessionPage() {
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-2">
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-lg">{p.name}</span>
-                        <Badge variant="secondary">重み: {p.weight}</Badge>
+                        <Badge variant="secondary">傾斜: {p.weight}</Badge>
                       </div>
                       <div className="text-xl sm:text-2xl font-bold text-primary">
                         {p.shareAmount.toLocaleString()}円

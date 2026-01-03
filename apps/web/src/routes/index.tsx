@@ -16,7 +16,7 @@ function LandingPage() {
               Hododasu
             </CardTitle>
             <CardDescription className="text-base sm:text-lg md:text-xl text-muted-foreground px-2">
-              重み付き割り勘を簡単に計算し、LINEで個別送信
+              傾斜付き割り勘を簡単に計算し、LINEで個別送信
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 sm:space-y-4">

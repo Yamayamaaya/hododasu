@@ -1,23 +1,28 @@
 // 環境変数を最初に読み込む
 import './config/env';
 import { env } from './config/env';
-import { OpenAPIHono } from '@hono/zod-openapi';
+import { OpenAPIHono, $ } from '@hono/zod-openapi';
 import { serve } from '@hono/node-server';
 import { swaggerUI } from '@hono/swagger-ui';
+import { cors } from 'hono/cors';
+import type { MiddlewareHandler } from 'hono';
 import sessionsRouter from './routes/sessions';
 
-const app = new OpenAPIHono();
+const baseApp = new OpenAPIHono();
 
-// CORS設定（手動実装）
-app.use('*', async (c, next) => {
-  c.header('Access-Control-Allow-Origin', '*');
-  c.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-  c.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  if (c.req.method === 'OPTIONS') {
-    return new Response(null, { status: 204 });
-  }
-  await next();
-});
+// CORS設定（Hono公式ミドルウェアを使用）
+// cors()の戻り値をMiddlewareHandlerとして明示的に型付け（unknownを経由）
+const corsMiddleware = cors({
+  origin: ['http://localhost:3000'], // 開発環境のフロントエンドURL
+  allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+}) as unknown as MiddlewareHandler;
+
+baseApp.use('*', corsMiddleware);
+
+// OpenAPIHono型に復元
+const app = $(baseApp);
 
 // ヘルスチェック
 app.get('/health', (c) => {

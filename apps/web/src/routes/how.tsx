@@ -24,9 +24,9 @@ function HowPage() {
           </CardHeader>
           <CardContent className="space-y-6 sm:space-y-8">
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-2xl font-semibold">重み付き割り勘の計算方法</h2>
+              <h2 className="text-2xl font-semibold">傾斜付き割り勘の計算方法</h2>
               <p className="text-muted-foreground leading-relaxed">
-                Hododasuでは、各参加者に設定された「重み」に基づいて負担額を計算します。
+                Hododasuでは、各参加者に設定された「傾斜」に基づいて負担額を計算します。
               </p>
             </section>
 
@@ -37,7 +37,7 @@ function HowPage() {
                   各参加者の基本負担額を計算します。
                   <div className="mt-2 sm:mt-3 ml-4 sm:ml-6 bg-muted/50 rounded-lg p-3 sm:p-4">
                     <code className="text-sm font-mono">
-                      基本負担額 = (合計金額 × 参加者の重み) ÷ 全参加者の重みの合計
+                      基本負担額 = (合計金額 × 参加者の傾斜) ÷ 全参加者の傾斜の合計
                     </code>
                   </div>
                 </li>
@@ -56,15 +56,15 @@ function HowPage() {
               <div className="bg-muted/50 rounded-lg p-4 sm:p-6 space-y-3 sm:space-y-4">
                   <p className="font-semibold">例：合計金額 1,000円、参加者3人</p>
                   <ul className="list-disc list-inside space-y-1 text-sm">
-                    <li>参加者A: 重み 1</li>
-                    <li>参加者B: 重み 2</li>
-                    <li>参加者C: 重み 3</li>
+                    <li>参加者A: 傾斜 100</li>
+                    <li>参加者B: 傾斜 200</li>
+                    <li>参加者C: 傾斜 300</li>
                   </ul>
                   <div className="mt-3 sm:mt-4 space-y-2 text-sm leading-relaxed">
-                    <p>重みの合計: 6</p>
-                    <p>参加者Aの基本負担額: (1,000 × 1) ÷ 6 = 166.66...円 → 切り捨て: 166円</p>
-                    <p>参加者Bの基本負担額: (1,000 × 2) ÷ 6 = 333.33...円 → 切り捨て: 333円</p>
-                    <p>参加者Cの基本負担額: (1,000 × 3) ÷ 6 = 500.00...円 → 切り捨て: 500円</p>
+                    <p>傾斜の合計: 600</p>
+                    <p>参加者Aの基本負担額: (1,000 × 100) ÷ 600 = 166.66...円 → 切り捨て: 166円</p>
+                    <p>参加者Bの基本負担額: (1,000 × 200) ÷ 600 = 333.33...円 → 切り捨て: 333円</p>
+                    <p>参加者Cの基本負担額: (1,000 × 300) ÷ 600 = 500.00...円 → 切り捨て: 500円</p>
                     <p className="mt-2">切り捨て後の合計: 999円</p>
                     <p>端数: 1,000 - 999 = 1円</p>
                     <p className="mt-2 font-semibold">結果:</p>
@@ -79,10 +79,10 @@ function HowPage() {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h3 className="text-xl font-semibold">重みについて</h3>
+              <h3 className="text-xl font-semibold">傾斜について</h3>
               <p className="text-muted-foreground leading-relaxed">
-                重みは、各参加者の負担の割合を表します。重みが大きいほど、負担額も大きくなります。
-                デフォルトは1で、全員が均等に負担する場合は全員の重みを1に設定してください。
+                傾斜は、各参加者の負担の割合を表します。傾斜が大きいほど、負担額も大きくなります。
+                デフォルトは100で、全員が均等に負担する場合は全員の傾斜を100に設定してください。
               </p>
             </section>
           </CardContent>

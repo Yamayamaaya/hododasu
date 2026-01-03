@@ -19,7 +19,7 @@ function NewSessionPage() {
   const [formData, setFormData] = useState<CreateSessionRequest>({
     title: '',
     totalAmount: 0,
-    participants: [{ name: '', weight: 1 }],
+    participants: [{ name: '', weight: 100 }],
     messageTemplate: '',
     attachDetailsLink: false,
   });
@@ -47,7 +47,7 @@ function NewSessionPage() {
   const addParticipant = () => {
     setFormData({
       ...formData,
-      participants: [...formData.participants, { name: '', weight: 1 }],
+      participants: [...formData.participants, { name: '', weight: 100 }],
     });
   };
 
@@ -70,7 +70,7 @@ function NewSessionPage() {
         <Card className="shadow-lg border-0">
           <CardHeader>
             <CardTitle className="text-3xl sm:text-4xl">新規セッション作成</CardTitle>
-            <CardDescription>重み付き割り勘のセッションを作成します</CardDescription>
+            <CardDescription>傾斜付き割り勘のセッションを作成します</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
@@ -131,16 +131,16 @@ function NewSessionPage() {
                             htmlFor={`weight-${index}`}
                             className="text-xs text-muted-foreground"
                           >
-                            重み
+                            傾斜
                           </Label>
                           <Input
                             id={`weight-${index}`}
                             type="number"
                             min="1"
-                            placeholder="1"
+                            placeholder="100"
                             value={p.weight}
                             onChange={(e) =>
-                              updateParticipant(index, 'weight', parseInt(e.target.value) || 1)
+                              updateParticipant(index, 'weight', parseInt(e.target.value) || 100)
                             }
                             required
                           />
