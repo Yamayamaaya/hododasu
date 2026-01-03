@@ -1,13 +1,9 @@
+import { env } from '../config/env';
 import postgres from 'postgres';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
-import { config } from 'dotenv';
-import { resolve } from 'path';
 
-// .env.localファイルを読み込む
-config({ path: resolve(process.cwd(), '.env.local') });
-
-const directClient = postgres(process.env.DATABASE_URL_DIRECT || '');
+const directClient = postgres(env.DATABASE_URL_DIRECT);
 const db = drizzle(directClient);
 
 async function runMigrations() {

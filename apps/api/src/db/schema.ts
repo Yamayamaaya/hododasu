@@ -27,4 +27,3 @@ export type Session = typeof sessions.$inferSelect;
 export type NewSession = typeof sessions.$inferInsert;
 export type SessionParticipant = typeof sessionParticipants.$inferSelect;
 export type NewSessionParticipant = typeof sessionParticipants.$inferInsert;
-

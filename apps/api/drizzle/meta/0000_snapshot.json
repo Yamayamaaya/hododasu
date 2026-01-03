@@ -1,10 +1,8 @@
 {
-  "id": "a36a9011-070a-49cb-b36a-fd9d1966e61a",
-  "prevId": "00000000-0000-0000-0000-000000000000",
-  "version": "5",
-  "dialect": "pg",
+  "version": "7",
+  "dialect": "postgresql",
   "tables": {
-    "session_participants": {
+    "public.session_participants": {
       "name": "session_participants",
       "schema": "",
       "columns": {
@@ -60,21 +58,24 @@
         "session_participants_session_id_sessions_id_fk": {
           "name": "session_participants_session_id_sessions_id_fk",
           "tableFrom": "session_participants",
-          "tableTo": "sessions",
           "columnsFrom": [
             "session_id"
           ],
+          "tableTo": "sessions",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "sessions": {
+    "public.sessions": {
       "name": "sessions",
       "schema": "",
       "columns": {
@@ -137,19 +138,28 @@
       "uniqueConstraints": {
         "sessions_edit_id_unique": {
           "name": "sessions_edit_id_unique",
-          "nullsNotDistinct": false,
           "columns": [
             "edit_id"
-          ]
+          ],
+          "nullsNotDistinct": false
         }
-      }
+      },
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     }
   },
   "enums": {},
   "schemas": {},
   "_meta": {
-    "columns": {},
     "schemas": {},
-    "tables": {}
-  }
+    "tables": {},
+    "columns": {}
+  },
+  "id": "a36a9011-070a-49cb-b36a-fd9d1966e61a",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "sequences": {},
+  "policies": {},
+  "views": {},
+  "roles": {}
 }

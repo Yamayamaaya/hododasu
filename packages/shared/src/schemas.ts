@@ -1,23 +1,53 @@
 import { z } from 'zod';
 
-// ここに共通のzodスキーマを定義
-// 例: APIリクエスト/レスポンス、ドメイン型など
-
-// セッション関連のスキーマ例（project.mdに基づく）
+// 参加者スキーマ
 export const participantSchema = z.object({
   name: z.string().min(1),
   weight: z.number().int().min(1).default(1),
 });
 
-export const sessionSchema = z.object({
+// セッション作成・更新用スキーマ
+export const sessionInputSchema = z.object({
   title: z.string().optional(),
   totalAmount: z.number().int().min(0),
-  participants: z.array(participantSchema),
+  participants: z.array(participantSchema).min(1),
   messageTemplate: z.string().optional(),
   attachDetailsLink: z.boolean().default(false),
 });
 
+// API リクエスト/レスポンス用スキーマ
+export const createSessionRequestSchema = sessionInputSchema;
+export const updateSessionRequestSchema = sessionInputSchema.partial();
+
+export const createSessionResponseSchema = z.object({
+  editId: z.string(),
+});
+
+export const sessionParticipantResponseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  weight: z.number().int(),
+  shareAmount: z.number().int().nullable(),
+});
+
+export const sessionResponseSchema = z.object({
+  id: z.string(),
+  editId: z.string(),
+  title: z.string().nullable(),
+  totalAmount: z.number().int(),
+  messageTemplate: z.string().nullable(),
+  attachDetailsLink: z.boolean(),
+  participants: z.array(sessionParticipantResponseSchema),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
 // 型エクスポート
 export type Participant = z.infer<typeof participantSchema>;
-export type Session = z.infer<typeof sessionSchema>;
+export type SessionInput = z.infer<typeof sessionInputSchema>;
+export type CreateSessionRequest = z.infer<typeof createSessionRequestSchema>;
+export type UpdateSessionRequest = z.infer<typeof updateSessionRequestSchema>;
+export type CreateSessionResponse = z.infer<typeof createSessionResponseSchema>;
+export type SessionResponse = z.infer<typeof sessionResponseSchema>;
+export type SessionParticipantResponse = z.infer<typeof sessionParticipantResponseSchema>;
 
