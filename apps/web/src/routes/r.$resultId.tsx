@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
+import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getSessionByResultId } from '../lib/api';
+import { addViewHistory } from '../lib/history';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +21,19 @@ function ResultPage() {
     queryKey: ['session', 'result', resultId],
     queryFn: () => getSessionByResultId(resultId),
   });
+
+  // セッション情報が取得できたら履歴に追加
+  useEffect(() => {
+    if (session) {
+      addViewHistory({
+        type: 'result',
+        id: resultId,
+        title: session.title || '無題のセッション',
+        timestamp: Date.now(),
+        path: `/r/${resultId}`,
+      });
+    }
+  }, [session, resultId]);
 
   if (isLoading) {
     return (

@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getSession, updateSession, deleteSession } from '../lib/api';
 import { buildLineMessage, generateLineUrl } from '../lib/line';
+import { addViewHistory } from '../lib/history';
 import { SessionInput, UpdateSessionRequest } from '@hododasu/shared';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -43,6 +44,19 @@ function EditSessionPage() {
   });
 
   const [formData, setFormData] = useState<SessionInput | null>(null);
+
+  // セッション情報が取得できたら履歴に追加
+  useEffect(() => {
+    if (session) {
+      addViewHistory({
+        type: 'edit',
+        id: editId,
+        title: session.title || '無題のセッション',
+        timestamp: Date.now(),
+        path: `/e/${editId}`,
+      });
+    }
+  }, [session, editId]);
 
   if (isLoading) {
     return (
