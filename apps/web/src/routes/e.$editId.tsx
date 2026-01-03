@@ -1,9 +1,9 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getSession, updateSession, deleteSession } from '../lib/api';
 import { buildLineMessage, generateLineUrl } from '../lib/line';
-import { UpdateSessionRequest } from '@hododasu/shared';
+import { SessionInput, UpdateSessionRequest } from '@hododasu/shared';
 
 export const Route = createFileRoute('/e/$editId')({
   component: EditSessionPage,
@@ -11,7 +11,6 @@ export const Route = createFileRoute('/e/$editId')({
 
 function EditSessionPage() {
   const { editId } = Route.useParams();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const { data: session, isLoading } = useQuery({
@@ -33,7 +32,7 @@ function EditSessionPage() {
     },
   });
 
-  const [formData, setFormData] = useState<UpdateSessionRequest | null>(null);
+  const [formData, setFormData] = useState<SessionInput | null>(null);
 
   if (isLoading) {
     return (
@@ -56,8 +55,8 @@ function EditSessionPage() {
     );
   }
 
-  const currentData = formData || {
-    title: session.title || '',
+  const currentData: SessionInput = formData || {
+    title: session.title,
     totalAmount: session.totalAmount,
     participants: session.participants.map((p) => ({
       name: p.name,
@@ -69,6 +68,10 @@ function EditSessionPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!currentData.title.trim()) {
+      alert('タイトルを入力してください');
+      return;
+    }
     if (currentData.participants.length === 0) {
       alert('参加者を1人以上追加してください');
       return;
@@ -77,7 +80,7 @@ function EditSessionPage() {
       alert('参加者の名前を入力してください');
       return;
     }
-    updateMutation.mutate(currentData);
+    updateMutation.mutate(currentData as UpdateSessionRequest);
     setFormData(null);
   };
 
@@ -112,29 +115,22 @@ function EditSessionPage() {
           </a>
         </div>
 
-        <h1 className="text-3xl font-bold mb-8">
-          {session.title || '無題のセッション'}
-        </h1>
+        <h1 className="text-3xl font-bold mb-8">{session.title}</h1>
 
         <form onSubmit={handleSubmit} className="space-y-6 mb-8">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              タイトル（任意）
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">タイトル *</label>
             <input
               type="text"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg"
               value={currentData.title}
-              onChange={(e) =>
-                setFormData({ ...currentData, title: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...currentData, title: e.target.value })}
+              required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              合計金額（円）*
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">合計金額（円）*</label>
             <input
               type="number"
               min="0"
@@ -151,9 +147,7 @@ function EditSessionPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              参加者 *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">参加者 *</label>
             <div className="space-y-3">
               {currentData.participants.map((p, index) => (
                 <div key={index} className="flex gap-3 items-center">
@@ -206,9 +200,7 @@ function EditSessionPage() {
               rows={3}
               placeholder="置換変数: {name} {amount} {title} {total}"
               value={currentData.messageTemplate}
-              onChange={(e) =>
-                setFormData({ ...currentData, messageTemplate: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...currentData, messageTemplate: e.target.value })}
             />
           </div>
 
@@ -221,9 +213,7 @@ function EditSessionPage() {
                   setFormData({ ...currentData, attachDetailsLink: e.target.checked })
                 }
               />
-              <span className="text-sm font-medium text-gray-700">
-                計算方法の説明リンクを添付
-              </span>
+              <span className="text-sm font-medium text-gray-700">計算方法の説明リンクを添付</span>
             </label>
           </div>
 
@@ -250,7 +240,8 @@ function EditSessionPage() {
                   session.title,
                   session.totalAmount,
                   session.attachDetailsLink,
-                  baseUrl
+                  baseUrl,
+                  session.resultId
                 );
                 const lineUrl = generateLineUrl(message);
 
@@ -259,13 +250,9 @@ function EditSessionPage() {
                     <div className="flex justify-between items-center mb-2">
                       <div>
                         <span className="font-semibold">{p.name}</span>
-                        <span className="text-gray-600 ml-2">
-                          (重み: {p.weight})
-                        </span>
+                        <span className="text-gray-600 ml-2">(重み: {p.weight})</span>
                       </div>
-                      <div className="text-xl font-bold">
-                        {p.shareAmount.toLocaleString()}円
-                      </div>
+                      <div className="text-xl font-bold">{p.shareAmount.toLocaleString()}円</div>
                     </div>
                     <div className="bg-gray-50 rounded p-3 mb-3 text-sm whitespace-pre-wrap">
                       {message}
@@ -313,4 +300,3 @@ function EditSessionPage() {
     </div>
   );
 }
-

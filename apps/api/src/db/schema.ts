@@ -3,7 +3,8 @@ import { pgTable, text, integer, boolean, timestamp, uuid } from 'drizzle-orm/pg
 export const sessions = pgTable('sessions', {
   id: uuid('id').defaultRandom().primaryKey(),
   editId: text('edit_id').notNull().unique(),
-  title: text('title'),
+  resultId: text('result_id').notNull().unique(),
+  title: text('title').notNull(),
   totalAmount: integer('total_amount').notNull(),
   messageTemplate: text('message_template'),
   attachDetailsLink: boolean('attach_details_link').notNull().default(false),

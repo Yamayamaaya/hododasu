@@ -19,6 +19,7 @@ sessionsRouter.post(
   async (c) => {
     const data = c.req.valid('json');
     const editId = nanoid();
+    const resultId = nanoid();
 
     try {
       // セッションを作成
@@ -26,7 +27,8 @@ sessionsRouter.post(
         .insert(sessions)
         .values({
           editId,
-          title: data.title || null,
+          resultId,
+          title: data.title,
           totalAmount: data.totalAmount,
           messageTemplate: data.messageTemplate || null,
           attachDetailsLink: data.attachDetailsLink ?? false,
@@ -76,6 +78,7 @@ sessionsRouter.get('/:editId', async (c) => {
     return c.json({
       id: session.id,
       editId: session.editId,
+      resultId: session.resultId,
       title: session.title,
       totalAmount: session.totalAmount,
       messageTemplate: session.messageTemplate,
@@ -117,7 +120,7 @@ sessionsRouter.patch(
 
       // セッション情報を更新
       const updateData: {
-        title?: string | null;
+        title?: string;
         totalAmount?: number;
         messageTemplate?: string | null;
         attachDetailsLink?: boolean;
@@ -126,7 +129,7 @@ sessionsRouter.patch(
         updatedAt: new Date(),
       };
 
-      if (data.title !== undefined) updateData.title = data.title || null;
+      if (data.title !== undefined) updateData.title = data.title;
       if (data.totalAmount !== undefined) updateData.totalAmount = data.totalAmount;
       if (data.messageTemplate !== undefined)
         updateData.messageTemplate = data.messageTemplate || null;
@@ -198,6 +201,7 @@ sessionsRouter.patch(
       return c.json({
         id: updatedSession.id,
         editId: updatedSession.editId,
+        resultId: updatedSession.resultId,
         title: updatedSession.title,
         totalAmount: updatedSession.totalAmount,
         messageTemplate: updatedSession.messageTemplate,
@@ -217,6 +221,49 @@ sessionsRouter.patch(
     }
   }
 );
+
+// GET /api/sessions/result/:resultId
+sessionsRouter.get('/result/:resultId', async (c) => {
+  const resultId = c.req.param('resultId');
+
+  try {
+    const [session] = await db
+      .select()
+      .from(sessions)
+      .where(eq(sessions.resultId, resultId))
+      .limit(1);
+
+    if (!session) {
+      return c.json({ error: 'Session not found' }, 404);
+    }
+
+    const participants = await db
+      .select()
+      .from(sessionParticipants)
+      .where(eq(sessionParticipants.sessionId, session.id));
+
+    return c.json({
+      id: session.id,
+      editId: session.editId,
+      resultId: session.resultId,
+      title: session.title,
+      totalAmount: session.totalAmount,
+      messageTemplate: session.messageTemplate,
+      attachDetailsLink: session.attachDetailsLink,
+      participants: participants.map((p) => ({
+        id: p.id,
+        name: p.name,
+        weight: p.weight,
+        shareAmount: p.shareAmount,
+      })),
+      createdAt: session.createdAt.toISOString(),
+      updatedAt: session.updatedAt.toISOString(),
+    });
+  } catch (error) {
+    console.error('Error fetching session:', error);
+    return c.json({ error: 'Failed to fetch session' }, 500);
+  }
+});
 
 // DELETE /api/sessions/:editId
 sessionsRouter.delete('/:editId', async (c) => {

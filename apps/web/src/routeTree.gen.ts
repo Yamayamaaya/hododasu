@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as NewRouteImport } from './routes/new'
 import { Route as HowRouteImport } from './routes/how'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as RResultIdRouteImport } from './routes/r.$resultId'
 import { Route as EEditIdRouteImport } from './routes/e.$editId'
 
 const NewRoute = NewRouteImport.update({
@@ -29,6 +30,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RResultIdRoute = RResultIdRouteImport.update({
+  id: '/r/$resultId',
+  path: '/r/$resultId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EEditIdRoute = EEditIdRouteImport.update({
   id: '/e/$editId',
   path: '/e/$editId',
@@ -40,12 +46,14 @@ export interface FileRoutesByFullPath {
   '/how': typeof HowRoute
   '/new': typeof NewRoute
   '/e/$editId': typeof EEditIdRoute
+  '/r/$resultId': typeof RResultIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/how': typeof HowRoute
   '/new': typeof NewRoute
   '/e/$editId': typeof EEditIdRoute
+  '/r/$resultId': typeof RResultIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,13 +61,14 @@ export interface FileRoutesById {
   '/how': typeof HowRoute
   '/new': typeof NewRoute
   '/e/$editId': typeof EEditIdRoute
+  '/r/$resultId': typeof RResultIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/how' | '/new' | '/e/$editId'
+  fullPaths: '/' | '/how' | '/new' | '/e/$editId' | '/r/$resultId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/how' | '/new' | '/e/$editId'
-  id: '__root__' | '/' | '/how' | '/new' | '/e/$editId'
+  to: '/' | '/how' | '/new' | '/e/$editId' | '/r/$resultId'
+  id: '__root__' | '/' | '/how' | '/new' | '/e/$editId' | '/r/$resultId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -67,6 +76,7 @@ export interface RootRouteChildren {
   HowRoute: typeof HowRoute
   NewRoute: typeof NewRoute
   EEditIdRoute: typeof EEditIdRoute
+  RResultIdRoute: typeof RResultIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -92,6 +102,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/r/$resultId': {
+      id: '/r/$resultId'
+      path: '/r/$resultId'
+      fullPath: '/r/$resultId'
+      preLoaderRoute: typeof RResultIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/e/$editId': {
       id: '/e/$editId'
       path: '/e/$editId'
@@ -107,6 +124,7 @@ const rootRouteChildren: RootRouteChildren = {
   HowRoute: HowRoute,
   NewRoute: NewRoute,
   EEditIdRoute: EEditIdRoute,
+  RResultIdRoute: RResultIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

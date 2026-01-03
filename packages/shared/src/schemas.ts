@@ -8,7 +8,7 @@ export const participantSchema = z.object({
 
 // セッション作成・更新用スキーマ
 export const sessionInputSchema = z.object({
-  title: z.string().optional(),
+  title: z.string().min(1),
   totalAmount: z.number().int().min(0),
   participants: z.array(participantSchema).min(1),
   messageTemplate: z.string().optional(),
@@ -33,7 +33,8 @@ export const sessionParticipantResponseSchema = z.object({
 export const sessionResponseSchema = z.object({
   id: z.string(),
   editId: z.string(),
-  title: z.string().nullable(),
+  resultId: z.string(),
+  title: z.string(),
   totalAmount: z.number().int(),
   messageTemplate: z.string().nullable(),
   attachDetailsLink: z.boolean(),

@@ -8,7 +8,8 @@ export function buildLineMessage(
   title: string | null,
   totalAmount: number,
   attachDetailsLink: boolean,
-  baseUrl: string
+  baseUrl: string,
+  resultId: string
 ): string {
   const lines: string[] = [];
 
@@ -25,7 +26,11 @@ export function buildLineMessage(
   // 金額行（必須）
   lines.push(`\n${participantName}さんの負担額: ${shareAmount.toLocaleString()}円`);
 
-  // 計算方法の説明リンク
+  // 結果画面のリンク（常に追加）
+  const resultUrl = `${baseUrl}/r/${resultId}`;
+  lines.push(`\n詳細: ${resultUrl}`);
+
+  // 計算方法の説明リンク（オプション）
   if (attachDetailsLink) {
     const howUrl = `${baseUrl}/how`;
     lines.push(`\n計算方法: ${howUrl}`);

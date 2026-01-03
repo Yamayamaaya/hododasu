@@ -29,6 +29,14 @@ export async function getSession(editId: string): Promise<SessionResponse> {
   return response.json();
 }
 
+export async function getSessionByResultId(resultId: string): Promise<SessionResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/sessions/result/${resultId}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch session');
+  }
+  return response.json();
+}
+
 export async function updateSession(
   editId: string,
   data: UpdateSessionRequest
