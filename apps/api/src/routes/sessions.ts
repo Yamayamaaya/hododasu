@@ -1,63 +1,138 @@
-import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
+import { OpenAPIHono } from '@hono/zod-openapi';
+import { createRoute } from '@hono/zod-openapi';
+import { z } from 'zod';
 import { db } from '../db';
 import { sessions, sessionParticipants } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import {
   createSessionRequestSchema,
   updateSessionRequestSchema,
+  createSessionResponseSchema,
+  sessionResponseSchema,
+  errorResponseSchema,
+  deleteSessionResponseSchema,
 } from '@hododasu/shared';
 import { calculateShareAmounts } from '../utils/calculation';
 import { nanoid } from 'nanoid';
 
-const sessionsRouter = new Hono();
+const sessionsRouter = new OpenAPIHono();
 
 // POST /api/sessions
-sessionsRouter.post(
-  '/',
-  zValidator('json', createSessionRequestSchema),
-  async (c) => {
-    const data = c.req.valid('json');
-    const editId = nanoid();
-    const resultId = nanoid();
+const createSessionRoute = createRoute({
+  method: 'post',
+  path: '/',
+  tags: ['Sessions'],
+  summary: 'セッションを作成',
+  description: '新しい割り勘セッションを作成します',
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: createSessionRequestSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    201: {
+      description: 'セッションが正常に作成されました',
+      content: {
+        'application/json': {
+          schema: createSessionResponseSchema,
+        },
+      },
+    },
+    500: {
+      description: 'サーバーエラー',
+      content: {
+        'application/json': {
+          schema: errorResponseSchema,
+        },
+      },
+    },
+  },
+});
 
-    try {
-      // セッションを作成
-      const [session] = await db
-        .insert(sessions)
-        .values({
-          editId,
-          resultId,
-          title: data.title,
-          totalAmount: data.totalAmount,
-          messageTemplate: data.messageTemplate || null,
-          attachDetailsLink: data.attachDetailsLink ?? false,
-        })
-        .returning();
+sessionsRouter.openapi(createSessionRoute, async (c) => {
+  const data = c.req.valid('json');
+  const editId = nanoid();
+  const resultId = nanoid();
 
-      // 参加者を作成（計算はまだ行わない）
-      if (data.participants.length > 0) {
-        await db.insert(sessionParticipants).values(
-          data.participants.map((p) => ({
-            sessionId: session.id,
-            name: p.name,
-            weight: p.weight,
-            shareAmount: null, // 初期状態では計算しない
-          }))
-        );
-      }
+  try {
+    // セッションを作成
+    const [session] = await db
+      .insert(sessions)
+      .values({
+        editId,
+        resultId,
+        title: data.title,
+        totalAmount: data.totalAmount,
+        messageTemplate: data.messageTemplate || null,
+        attachDetailsLink: data.attachDetailsLink ?? false,
+      })
+      .returning();
 
-      return c.json({ editId }, 201);
-    } catch (error) {
-      console.error('Error creating session:', error);
-      return c.json({ error: 'Failed to create session' }, 500);
+    // 参加者を作成（計算はまだ行わない）
+    if (data.participants.length > 0) {
+      await db.insert(sessionParticipants).values(
+        data.participants.map((p) => ({
+          sessionId: session.id,
+          name: p.name,
+          weight: p.weight,
+          shareAmount: null, // 初期状態では計算しない
+        }))
+      );
     }
+
+    return c.json({ editId }, 201);
+  } catch (error) {
+    console.error('Error creating session:', error);
+    return c.json({ error: 'Failed to create session' }, 500);
   }
-);
+});
 
 // GET /api/sessions/:editId
-sessionsRouter.get('/:editId', async (c) => {
-  const editId = c.req.param('editId');
+const getSessionRoute = createRoute({
+  method: 'get',
+  path: '/{editId}',
+  tags: ['Sessions'],
+  summary: 'セッションを取得',
+  description: 'editIdを使用してセッション情報を取得します',
+  request: {
+    params: z.object({
+      editId: z.string().describe('編集用ID'),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'セッション情報',
+      content: {
+        'application/json': {
+          schema: sessionResponseSchema,
+        },
+      },
+    },
+    404: {
+      description: 'セッションが見つかりません',
+      content: {
+        'application/json': {
+          schema: errorResponseSchema,
+        },
+      },
+    },
+    500: {
+      description: 'サーバーエラー',
+      content: {
+        'application/json': {
+          schema: errorResponseSchema,
+        },
+      },
+    },
+  },
+});
+
+sessionsRouter.openapi(getSessionRoute, async (c) => {
+  const { editId } = c.req.valid('param');
 
   try {
     const [session] = await db
@@ -99,12 +174,55 @@ sessionsRouter.get('/:editId', async (c) => {
 });
 
 // PATCH /api/sessions/:editId
-sessionsRouter.patch(
-  '/:editId',
-  zValidator('json', updateSessionRequestSchema),
-  async (c) => {
-    const editId = c.req.param('editId');
-    const data = c.req.valid('json');
+const updateSessionRoute = createRoute({
+  method: 'patch',
+  path: '/{editId}',
+  tags: ['Sessions'],
+  summary: 'セッションを更新',
+  description: 'editIdを使用してセッション情報を更新し、割り勘金額を計算します',
+  request: {
+    params: z.object({
+      editId: z.string().describe('編集用ID'),
+    }),
+    body: {
+      content: {
+        'application/json': {
+          schema: updateSessionRequestSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'セッションが正常に更新されました',
+      content: {
+        'application/json': {
+          schema: sessionResponseSchema,
+        },
+      },
+    },
+    404: {
+      description: 'セッションが見つかりません',
+      content: {
+        'application/json': {
+          schema: errorResponseSchema,
+        },
+      },
+    },
+    500: {
+      description: 'サーバーエラー',
+      content: {
+        'application/json': {
+          schema: errorResponseSchema,
+        },
+      },
+    },
+  },
+});
+
+sessionsRouter.openapi(updateSessionRoute, async (c) => {
+  const { editId } = c.req.valid('param');
+  const data = c.req.valid('json');
 
     try {
       // セッションを取得
@@ -223,8 +341,47 @@ sessionsRouter.patch(
 );
 
 // GET /api/sessions/result/:resultId
-sessionsRouter.get('/result/:resultId', async (c) => {
-  const resultId = c.req.param('resultId');
+const getSessionByResultIdRoute = createRoute({
+  method: 'get',
+  path: '/result/{resultId}',
+  tags: ['Sessions'],
+  summary: '結果IDでセッションを取得',
+  description: 'resultIdを使用してセッション情報を取得します',
+  request: {
+    params: z.object({
+      resultId: z.string().describe('結果表示用ID'),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'セッション情報',
+      content: {
+        'application/json': {
+          schema: sessionResponseSchema,
+        },
+      },
+    },
+    404: {
+      description: 'セッションが見つかりません',
+      content: {
+        'application/json': {
+          schema: errorResponseSchema,
+        },
+      },
+    },
+    500: {
+      description: 'サーバーエラー',
+      content: {
+        'application/json': {
+          schema: errorResponseSchema,
+        },
+      },
+    },
+  },
+});
+
+sessionsRouter.openapi(getSessionByResultIdRoute, async (c) => {
+  const { resultId } = c.req.valid('param');
 
   try {
     const [session] = await db
@@ -266,8 +423,47 @@ sessionsRouter.get('/result/:resultId', async (c) => {
 });
 
 // DELETE /api/sessions/:editId
-sessionsRouter.delete('/:editId', async (c) => {
-  const editId = c.req.param('editId');
+const deleteSessionRoute = createRoute({
+  method: 'delete',
+  path: '/{editId}',
+  tags: ['Sessions'],
+  summary: 'セッションを削除',
+  description: 'editIdを使用してセッションを削除します',
+  request: {
+    params: z.object({
+      editId: z.string().describe('編集用ID'),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'セッションが正常に削除されました',
+      content: {
+        'application/json': {
+          schema: deleteSessionResponseSchema,
+        },
+      },
+    },
+    404: {
+      description: 'セッションが見つかりません',
+      content: {
+        'application/json': {
+          schema: errorResponseSchema,
+        },
+      },
+    },
+    500: {
+      description: 'サーバーエラー',
+      content: {
+        'application/json': {
+          schema: errorResponseSchema,
+        },
+      },
+    },
+  },
+});
+
+sessionsRouter.openapi(deleteSessionRoute, async (c) => {
+  const { editId } = c.req.valid('param');
 
   try {
     const [session] = await db

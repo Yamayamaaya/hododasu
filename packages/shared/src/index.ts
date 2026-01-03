@@ -9,6 +9,8 @@ export {
   createSessionResponseSchema,
   sessionParticipantResponseSchema,
   sessionResponseSchema,
+  errorResponseSchema,
+  deleteSessionResponseSchema,
   type Participant,
   type SessionInput,
   type CreateSessionRequest,
@@ -16,4 +18,6 @@ export {
   type CreateSessionResponse,
   type SessionResponse,
   type SessionParticipantResponse,
+  type ErrorResponse,
+  type DeleteSessionResponse,
 } from './schemas';

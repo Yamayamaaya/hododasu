@@ -43,6 +43,15 @@ export const sessionResponseSchema = z.object({
   updatedAt: z.string(),
 });
 
+// エラーレスポンススキーマ
+export const errorResponseSchema = z.object({
+  error: z.string(),
+});
+
+export const deleteSessionResponseSchema = z.object({
+  message: z.string(),
+});
+
 // 型エクスポート
 export type Participant = z.infer<typeof participantSchema>;
 export type SessionInput = z.infer<typeof sessionInputSchema>;
@@ -51,4 +60,6 @@ export type UpdateSessionRequest = z.infer<typeof updateSessionRequestSchema>;
 export type CreateSessionResponse = z.infer<typeof createSessionResponseSchema>;
 export type SessionResponse = z.infer<typeof sessionResponseSchema>;
 export type SessionParticipantResponse = z.infer<typeof sessionParticipantResponseSchema>;
+export type ErrorResponse = z.infer<typeof errorResponseSchema>;
+export type DeleteSessionResponse = z.infer<typeof deleteSessionResponseSchema>;
 
