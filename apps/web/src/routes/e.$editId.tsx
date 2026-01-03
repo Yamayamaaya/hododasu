@@ -266,7 +266,7 @@ function EditSessionPage() {
               </div>
 
               <Button type="submit" disabled={updateMutation.isPending} className="w-full sm:w-auto">
-                {updateMutation.isPending ? '更新中...' : '計算・更新'}
+                {updateMutation.isPending ? '更新中...' : '更新'}
               </Button>
             </form>
           </CardContent>

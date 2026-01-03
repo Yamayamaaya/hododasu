@@ -72,16 +72,44 @@ sessionsRouter.openapi(createSessionRoute, async (c) => {
       })
       .returning();
 
-    // 参加者を作成（計算はまだ行わない）
+    // 参加者を作成
     if (data.participants.length > 0) {
       await db.insert(sessionParticipants).values(
         data.participants.map((p) => ({
           sessionId: session.id,
           name: p.name,
           weight: p.weight,
-          shareAmount: null, // 初期状態では計算しない
+          shareAmount: null, // 後で計算
         }))
       );
+
+      // 作成した参加者を取得
+      const currentParticipants = await db
+        .select()
+        .from(sessionParticipants)
+        .where(eq(sessionParticipants.sessionId, session.id));
+
+      // 計算を実行
+      const calculatedAmounts = calculateShareAmounts(
+        session.totalAmount,
+        currentParticipants.map((p) => ({
+          name: p.name,
+          weight: p.weight,
+        }))
+      );
+
+      // 計算結果を保存
+      for (const calculated of calculatedAmounts) {
+        const participant = currentParticipants.find(
+          (p) => p.name === calculated.name
+        );
+        if (participant) {
+          await db
+            .update(sessionParticipants)
+            .set({ shareAmount: calculated.shareAmount })
+            .where(eq(sessionParticipants.id, participant.id));
+        }
+      }
     }
 
     return c.json({ editId }, 201);
