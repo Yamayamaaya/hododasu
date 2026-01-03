@@ -36,13 +36,13 @@ function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-3 sm:px-4 py-4 sm:py-8 bg-gradient-to-br from-background to-muted/20">
+    <div className="flex items-center justify-center px-3 sm:px-4 py-4 sm:py-8 bg-gradient-to-br from-background to-muted/20">
       <div className="text-center max-w-2xl mx-auto w-full space-y-4 sm:space-y-6">
         <Card className="border-0 shadow-lg">
           <CardHeader className="space-y-3 sm:space-y-4 pb-4 sm:pb-6">
-            <CardTitle className="text-2xl sm:text-5xl md:text-6xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              Hododasu
-            </CardTitle>
+            <div className="flex justify-center mb-2 sm:mb-4">
+              <img src="/logo.png" alt="ホドダス" className="h-16 sm:h-24 md:h-32 object-contain" />
+            </div>
             <CardDescription className="text-sm sm:text-lg md:text-xl text-muted-foreground px-2">
               傾斜付き割り勘を簡単に計算し、LINEで個別送信
             </CardDescription>

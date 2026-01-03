@@ -9,7 +9,7 @@ export const Route = createFileRoute('/how')({
 
 function HowPage() {
   return (
-    <div className="min-h-screen py-4 sm:py-12 px-3 sm:px-4 bg-gradient-to-br from-background to-muted/20">
+    <div className="py-4 sm:py-12 px-3 sm:px-4 bg-gradient-to-br from-background to-muted/20">
       <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6">
         <Link to="/">
           <Button variant="ghost" className="gap-2">

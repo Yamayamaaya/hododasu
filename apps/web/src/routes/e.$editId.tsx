@@ -60,7 +60,7 @@ function EditSessionPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen py-4 sm:py-12 px-3 sm:px-4 bg-gradient-to-br from-background to-muted/20">
+      <div className="py-4 sm:py-12 px-3 sm:px-4 bg-gradient-to-br from-background to-muted/20">
         <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
           <Skeleton className="h-32 w-full" />
           <Skeleton className="h-64 w-full" />
@@ -71,7 +71,7 @@ function EditSessionPage() {
 
   if (!session) {
     return (
-      <div className="min-h-screen py-4 sm:py-12 px-3 sm:px-4 bg-gradient-to-br from-background to-muted/20">
+      <div className="py-4 sm:py-12 px-3 sm:px-4 bg-gradient-to-br from-background to-muted/20">
         <div className="max-w-4xl mx-auto">
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -142,7 +142,7 @@ function EditSessionPage() {
   const baseUrl = window.location.origin;
 
   return (
-    <div className="min-h-screen py-4 sm:py-12 px-3 sm:px-4 bg-gradient-to-br from-background to-muted/20">
+    <div className="py-4 sm:py-12 px-3 sm:px-4 bg-gradient-to-br from-background to-muted/20">
       <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
         <Link to="/">
           <Button variant="ghost" className="gap-2">
