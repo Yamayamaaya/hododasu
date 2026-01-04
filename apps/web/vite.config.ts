@@ -12,7 +12,14 @@ export default defineConfig({
     },
   },
   server: {
-    port: 3000,
+    host: '0.0.0.0',
+    port: Number(process.env.VITE_PORT) || 3000,
+    proxy: {
+      '/api': {
+        target: process.env.VITE_API_TARGET || 'http://api:8787',
+        changeOrigin: true,
+        rewrite: (path) => path, // /api/** をそのまま転送
+      },
+    },
   },
 });
-

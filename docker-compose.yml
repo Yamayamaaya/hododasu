@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  # PostgreSQLデータベース
+  db:
+    image: postgres:16-alpine
+    container_name: hododasu-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-hododasu}
+    ports:
+      - '${DB_PORT:-5432}:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-postgres}']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Hono API サーバー
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: hododasu-api
+    working_dir: /app
+    environment:
+      PORT: ${API_PORT:-8787}
+      DATABASE_URL_POOLED: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:${DB_PORT:-5432}/${POSTGRES_DB:-hododasu}
+      DATABASE_URL_DIRECT: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:${DB_PORT:-5432}/${POSTGRES_DB:-hododasu}
+    volumes:
+      # ソースコードをマウント（ホットリロード用）
+      - ./apps/api:/app/apps/api
+      - ./packages:/app/packages
+      # ルートの設定ファイルもマウント（変更時に反映）
+      - ./package.json:/app/package.json
+      - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml
+      - ./turbo.json:/app/turbo.json
+      - ./tsconfig.json:/app/tsconfig.json
+      # node_modulesはコンテナ内に保持（バインドマウントしない）
+      - /app/node_modules
+      - /app/apps/api/node_modules
+      - /app/packages/shared/node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - '${API_PORT:-8787}:${API_PORT:-8787}'
+
+  # React + Vite フロントエンド
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: hododasu-web
+    working_dir: /app
+    environment:
+      VITE_PORT: ${WEB_PORT:-3000}
+      VITE_API_TARGET: http://${API_SERVICE_NAME:-api}:${API_PORT:-8787}
+    volumes:
+      # ソースコードをマウント（ホットリロード用）
+      - ./apps/web:/app/apps/web
+      - ./packages:/app/packages
+      # ルートの設定ファイルもマウント（変更時に反映）
+      - ./package.json:/app/package.json
+      - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml
+      - ./turbo.json:/app/turbo.json
+      - ./tsconfig.json:/app/tsconfig.json
+      # node_modulesはコンテナ内に保持（バインドマウントしない）
+      - /app/node_modules
+      - /app/apps/web/node_modules
+      - /app/packages/shared/node_modules
+    depends_on:
+      - api
+    ports:
+      - '${WEB_PORT:-3000}:${WEB_PORT:-3000}'
+
+volumes:
+  postgres_data:

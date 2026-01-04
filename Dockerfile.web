@@ -1,0 +1,28 @@
+# Web用Dockerfile
+FROM node:20-alpine
+
+# pnpmをインストール
+RUN corepack enable && corepack prepare pnpm@8.15.0 --activate
+
+# 作業ディレクトリを設定
+WORKDIR /app
+
+# ルートのpackage.jsonとpnpm-lock.yamlをコピー
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY turbo.json tsconfig.json ./
+
+# 各パッケージのpackage.jsonをコピー
+COPY apps/web/package.json ./apps/web/
+COPY packages/shared/package.json ./packages/shared/
+
+# 依存関係をインストール（ルートで1回）
+RUN pnpm install --frozen-lockfile
+
+# ソースコードをコピー（後でvolumeで上書きされるが、初回ビルド用）
+COPY apps/web ./apps/web
+COPY packages/shared ./packages/shared
+
+# 作業ディレクトリはルートのまま（pnpm workspaceのため）
+# 開発サーバーを起動（Vite）
+CMD ["pnpm", "--filter", "web", "dev"]
+

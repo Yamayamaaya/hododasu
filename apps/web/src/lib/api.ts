@@ -5,7 +5,8 @@ import {
   UpdateSessionRequest,
 } from '@hododasu/shared';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8787';
+// 相対パスでAPIを呼び出す（Viteプロキシ経由）
+const API_BASE_URL = '';
 
 export async function createSession(
   data: CreateSessionRequest
