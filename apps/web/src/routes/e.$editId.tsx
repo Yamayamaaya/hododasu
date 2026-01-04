@@ -11,6 +11,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -19,6 +26,14 @@ import { ArrowLeft, Plus, Trash2, Send, AlertCircle, Home } from 'lucide-react';
 export const Route = createFileRoute('/e/$editId')({
   component: EditSessionPage,
 });
+
+function formatRoundingDigit(roundingDigit: number): string {
+  if (roundingDigit === 0.1) return '0.1の位（1円単位）';
+  if (roundingDigit === 1) return '1の位（10円単位）';
+  if (roundingDigit === 10) return '10の位（100円単位）';
+  if (roundingDigit === 100) return '100の位（1000円単位）';
+  return `${roundingDigit}の位`;
+}
 
 function EditSessionPage() {
   const { editId } = Route.useParams();
@@ -93,12 +108,16 @@ function EditSessionPage() {
   const currentData: SessionInput = formData || {
     title: session.title,
     totalAmount: session.totalAmount,
-    participants: session.participants.map((p) => ({
-      name: p.name,
-      weight: p.weight,
-    })),
+    participants: session.participants
+      .filter((p) => p.name !== '幹事') // 幹事は除外
+      .map((p) => ({
+        name: p.name,
+        weight: p.weight,
+      })),
     messageTemplate: session.messageTemplate || '',
     attachDetailsLink: session.attachDetailsLink,
+    roundingMethod: session.roundingMethod || 'round_half_up',
+    roundingUnit: session.roundingUnit || 0.1,
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -266,6 +285,59 @@ function EditSessionPage() {
                 </p>
               </div>
 
+              <div className="space-y-4 sm:space-y-6 border-t pt-4 sm:pt-6">
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="roundingMethod" className="text-sm sm:text-base">
+                    端数処理方法 <span className="text-destructive">*</span>
+                  </Label>
+                  <Select
+                    value={currentData.roundingMethod || 'round_half_up'}
+                    onValueChange={(value) =>
+                      setFormData({
+                        ...currentData,
+                        roundingMethod: value as 'round_up' | 'round_down' | 'round_half_up',
+                      })
+                    }
+                    required
+                  >
+                    <SelectTrigger id="roundingMethod">
+                      <SelectValue placeholder="端数処理方法を選択" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="round_up">切り上げ</SelectItem>
+                      <SelectItem value="round_down">切り下げ</SelectItem>
+                      <SelectItem value="round_half_up">四捨五入</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="roundingUnit" className="text-sm sm:text-base">
+                    端数処理の位 <span className="text-destructive">*</span>
+                  </Label>
+                  <Select
+                    value={currentData.roundingUnit?.toString() || '0.1'}
+                    onValueChange={(value) =>
+                      setFormData({
+                        ...currentData,
+                        roundingUnit: parseFloat(value),
+                      })
+                    }
+                    required
+                  >
+                    <SelectTrigger id="roundingUnit">
+                      <SelectValue placeholder="選択してください" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0.1">0.1の位（1円単位）</SelectItem>
+                      <SelectItem value="1">1の位（10円単位）</SelectItem>
+                      <SelectItem value="10">10の位（100円単位）</SelectItem>
+                      <SelectItem value="100">100の位（1000円単位）</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="attachDetailsLink"
@@ -295,6 +367,7 @@ function EditSessionPage() {
             <CardContent className="space-y-3 sm:space-y-4">
               {session.participants.map((p) => {
                 if (p.shareAmount === null) return null;
+                const isOrganizer = p.name === '幹事';
                 const message = buildLineMessage(
                   session.messageTemplate,
                   p.name,
@@ -312,21 +385,41 @@ function EditSessionPage() {
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-2">
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-base sm:text-lg">{p.name}</span>
-                        <Badge variant="secondary" className="text-xs">傾斜: {p.weight}</Badge>
+                        {!isOrganizer && (
+                          <Badge variant="secondary" className="text-xs">傾斜: {p.weight}</Badge>
+                        )}
+                        {isOrganizer && (
+                          <Badge variant="outline" className="text-xs">
+                            幹事分
+                          </Badge>
+                        )}
                       </div>
                       <div className="text-lg sm:text-2xl font-bold text-primary">
                         {p.shareAmount.toLocaleString()}円
                       </div>
                     </div>
-                    <div className="bg-muted/50 rounded-lg p-3 sm:p-4">
-                      <p className="text-sm whitespace-pre-wrap leading-relaxed">{message}</p>
-                    </div>
-                    <a href={lineUrl} target="_blank" rel="noopener noreferrer">
-                      <Button variant="default" className="w-full sm:w-auto gap-2 bg-green-600 hover:bg-green-700">
-                        <Send className="h-4 w-4" />
-                        LINEで送る
-                      </Button>
-                    </a>
+                    {isOrganizer && session.roundingMethod && session.roundingUnit && (
+                      <div className="text-xs text-muted-foreground bg-muted/50 rounded p-2">
+                        {session.roundingMethod === 'round_up'
+                          ? `※ 切り上げにより発生した差額を受け取ります（${formatRoundingDigit(session.roundingUnit)}）`
+                          : session.roundingMethod === 'round_down'
+                          ? `※ 切り下げにより発生した差額を負担します（${formatRoundingDigit(session.roundingUnit)}）`
+                          : `※ 四捨五入により発生した差額を処理します（${formatRoundingDigit(session.roundingUnit)}）`}
+                      </div>
+                    )}
+                    {!isOrganizer && (
+                      <>
+                        <div className="bg-muted/50 rounded-lg p-3 sm:p-4">
+                          <p className="text-sm whitespace-pre-wrap leading-relaxed">{message}</p>
+                        </div>
+                        <a href={lineUrl} target="_blank" rel="noopener noreferrer">
+                          <Button variant="default" className="w-full sm:w-auto gap-2 bg-green-600 hover:bg-green-700">
+                            <Send className="h-4 w-4" />
+                            LINEで送る
+                          </Button>
+                        </a>
+                      </>
+                    )}
                   </div>
                 );
               })}

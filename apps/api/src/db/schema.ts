@@ -1,4 +1,4 @@
-import { pgTable, text, integer, boolean, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { pgTable, text, integer, boolean, timestamp, uuid, real } from 'drizzle-orm/pg-core';
 
 export const sessions = pgTable('sessions', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -8,6 +8,8 @@ export const sessions = pgTable('sessions', {
   totalAmount: integer('total_amount').notNull(),
   messageTemplate: text('message_template'),
   attachDetailsLink: boolean('attach_details_link').notNull().default(false),
+  roundingMethod: text('rounding_method').notNull().default('round_half_up'),
+  roundingUnit: real('rounding_unit').notNull().default(0.1),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });

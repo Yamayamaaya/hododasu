@@ -9,6 +9,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Plus, Trash2 } from 'lucide-react';
 
 export const Route = createFileRoute('/new')({
@@ -22,6 +29,8 @@ function NewSessionPage() {
     participants: [{ name: '', weight: 100 }],
     messageTemplate: '',
     attachDetailsLink: false,
+    roundingMethod: 'round_half_up',
+    roundingUnit: 0.1,
   });
 
   const createMutation = useMutation({
@@ -190,6 +199,59 @@ function NewSessionPage() {
                 <p className="text-xs text-muted-foreground">
                   使用可能な変数: {'{name}'}, {'{amount}'}, {'{title}'}, {'{total}'}
                 </p>
+              </div>
+
+              <div className="space-y-4 sm:space-y-6 border-t pt-4 sm:pt-6">
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="roundingMethod" className="text-sm sm:text-base">
+                    端数処理方法 <span className="text-destructive">*</span>
+                  </Label>
+                  <Select
+                    value={formData.roundingMethod || 'round_half_up'}
+                    onValueChange={(value) =>
+                      setFormData({
+                        ...formData,
+                        roundingMethod: value as 'round_up' | 'round_down' | 'round_half_up',
+                      })
+                    }
+                    required
+                  >
+                    <SelectTrigger id="roundingMethod">
+                      <SelectValue placeholder="端数処理方法を選択" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="round_up">切り上げ</SelectItem>
+                      <SelectItem value="round_down">切り下げ</SelectItem>
+                      <SelectItem value="round_half_up">四捨五入</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="roundingUnit" className="text-sm sm:text-base">
+                    端数処理の位 <span className="text-destructive">*</span>
+                  </Label>
+                  <Select
+                    value={formData.roundingUnit?.toString() || '0.1'}
+                    onValueChange={(value) =>
+                      setFormData({
+                        ...formData,
+                        roundingUnit: parseFloat(value),
+                      })
+                    }
+                    required
+                  >
+                    <SelectTrigger id="roundingUnit">
+                      <SelectValue placeholder="選択してください" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0.1">0.1の位（1円単位）</SelectItem>
+                      <SelectItem value="1">1の位（10円単位）</SelectItem>
+                      <SelectItem value="10">10の位（100円単位）</SelectItem>
+                      <SelectItem value="100">100の位（1000円単位）</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div className="flex items-center space-x-2">

@@ -13,6 +13,8 @@ export const sessionInputSchema = z.object({
   participants: z.array(participantSchema).min(1),
   messageTemplate: z.string().optional(),
   attachDetailsLink: z.boolean().default(false),
+  roundingMethod: z.enum(['round_up', 'round_down', 'round_half_up']).default('round_half_up'),
+  roundingUnit: z.union([z.literal(0.1), z.literal(1), z.literal(10), z.literal(100)]).default(0.1),
 });
 
 // API リクエスト/レスポンス用スキーマ
@@ -38,6 +40,8 @@ export const sessionResponseSchema = z.object({
   totalAmount: z.number().int(),
   messageTemplate: z.string().nullable(),
   attachDetailsLink: z.boolean(),
+  roundingMethod: z.enum(['round_up', 'round_down', 'round_half_up']),
+  roundingUnit: z.number(),
   participants: z.array(sessionParticipantResponseSchema),
   createdAt: z.string(),
   updatedAt: z.string(),

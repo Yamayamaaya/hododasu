@@ -14,6 +14,14 @@ export const Route = createFileRoute('/r/$resultId')({
   component: ResultPage,
 });
 
+function formatRoundingDigit(roundingDigit: number): string {
+  if (roundingDigit === 0.1) return '0.1の位（1円単位）';
+  if (roundingDigit === 1) return '1の位（10円単位）';
+  if (roundingDigit === 10) return '10の位（100円単位）';
+  if (roundingDigit === 100) return '100の位（1000円単位）';
+  return `${roundingDigit}の位`;
+}
+
 function ResultPage() {
   const { resultId } = Route.useParams();
 
@@ -93,17 +101,34 @@ function ResultPage() {
             <CardContent className="space-y-3 sm:space-y-4">
               {session.participants.map((p) => {
                 if (p.shareAmount === null) return null;
+                const isOrganizer = p.name === '幹事';
                 return (
                   <div key={p.id} className="bg-muted/30 hover:bg-muted/50 transition-colors rounded-lg p-3 sm:p-4">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-base sm:text-lg">{p.name}</span>
-                          <Badge variant="secondary" className="text-xs">傾斜: {p.weight}</Badge>
+                          {!isOrganizer && (
+                            <Badge variant="secondary" className="text-xs">傾斜: {p.weight}</Badge>
+                          )}
+                          {isOrganizer && (
+                            <Badge variant="outline" className="text-xs">
+                              幹事分
+                            </Badge>
+                          )}
                         </div>
                         <div className="text-xl sm:text-3xl font-bold text-primary">
                           {p.shareAmount.toLocaleString()}円
                         </div>
                       </div>
+                      {isOrganizer && session.roundingMethod && session.roundingUnit && (
+                        <div className="text-xs text-muted-foreground bg-muted/50 rounded p-2 mt-2">
+                          {session.roundingMethod === 'round_up'
+                            ? `※ 切り上げにより発生した差額を受け取ります（${formatRoundingDigit(session.roundingUnit)}）`
+                            : session.roundingMethod === 'round_down'
+                            ? `※ 切り下げにより発生した差額を負担します（${formatRoundingDigit(session.roundingUnit)}）`
+                            : `※ 四捨五入により発生した差額を処理します（${formatRoundingDigit(session.roundingUnit)}）`}
+                        </div>
+                      )}
                   </div>
                 );
               })}

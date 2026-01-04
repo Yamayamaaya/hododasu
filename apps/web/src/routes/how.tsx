@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
 
 export const Route = createFileRoute('/how')({
@@ -41,12 +41,20 @@ function HowPage() {
                     </code>
                   </div>
                 </li>
-                <li className="text-sm sm:text-base leading-relaxed">基本負担額の小数部を切り捨てます。</li>
                 <li className="text-sm sm:text-base leading-relaxed">
-                  切り捨て後の合計と元の合計金額の差（端数）を計算します。
+                  各参加者の基本負担額を、指定した端数処理方法（切り上げ/切り下げ/四捨五入）と「処理する位（桁）」（デフォルト:
+                  0.1の位）で処理します。
                 </li>
                 <li className="text-sm sm:text-base leading-relaxed">
-                  端数を、小数部が大きい順に各参加者に1円ずつ配布します。
+                  端数処理後の合計と元の合計金額の差（端数）を計算します。
+                </li>
+                <li className="text-sm sm:text-base leading-relaxed">
+                  端数は「幹事分」として自動的に処理されます。
+                  <ul className="list-disc list-inside ml-4 mt-2 space-y-1">
+                    <li>切り上げの場合: 幹事が差額を受け取ります（負担額が減ります）</li>
+                    <li>切り下げの場合: 幹事が差額を負担します（負担額が増えます）</li>
+                    <li>四捨五入の場合: 差額が発生した場合は幹事が処理します</li>
+                  </ul>
                 </li>
               </ol>
             </section>
@@ -54,28 +62,62 @@ function HowPage() {
             <section className="space-y-3 sm:space-y-4">
               <h3 className="text-lg sm:text-xl font-semibold">計算例</h3>
               <div className="bg-muted/50 rounded-lg p-4 sm:p-6 space-y-3 sm:space-y-4">
-                  <p className="text-sm sm:text-base font-semibold">例：合計金額 1,000円、参加者3人</p>
-                  <ul className="list-disc list-inside space-y-1 text-xs sm:text-sm">
-                    <li>参加者A: 傾斜 100</li>
-                    <li>参加者B: 傾斜 200</li>
-                    <li>参加者C: 傾斜 300</li>
+                <p className="text-sm sm:text-base font-semibold">
+                  例：合計金額 1,000円、参加者3人、端数処理: 四捨五入、位: 0.1の位（= 1円単位）
+                </p>
+                <ul className="list-disc list-inside space-y-1 text-xs sm:text-sm">
+                  <li>参加者A: 傾斜 100</li>
+                  <li>参加者B: 傾斜 200</li>
+                  <li>参加者C: 傾斜 300</li>
+                </ul>
+                <div className="mt-3 sm:mt-4 space-y-2 text-xs sm:text-sm leading-relaxed">
+                  <p>傾斜の合計: 600</p>
+                  <p>参加者Aの基本負担額: (1,000 × 100) ÷ 600 = 166.66...円</p>
+                  <p>参加者Bの基本負担額: (1,000 × 200) ÷ 600 = 333.33...円</p>
+                  <p>参加者Cの基本負担額: (1,000 × 300) ÷ 600 = 500.00...円</p>
+                  <p className="mt-2">0.1の位で四捨五入（= 1円単位）:</p>
+                  <ul className="list-disc list-inside ml-4 space-y-1">
+                    <li>参加者A: 166.66... → 167円</li>
+                    <li>参加者B: 333.33... → 333円</li>
+                    <li>参加者C: 500.00... → 500円</li>
                   </ul>
-                  <div className="mt-3 sm:mt-4 space-y-2 text-xs sm:text-sm leading-relaxed">
-                    <p>傾斜の合計: 600</p>
-                    <p>参加者Aの基本負担額: (1,000 × 100) ÷ 600 = 166.66...円 → 切り捨て: 166円</p>
-                    <p>参加者Bの基本負担額: (1,000 × 200) ÷ 600 = 333.33...円 → 切り捨て: 333円</p>
-                    <p>参加者Cの基本負担額: (1,000 × 300) ÷ 600 = 500.00...円 → 切り捨て: 500円</p>
-                    <p className="mt-2">切り捨て後の合計: 999円</p>
-                    <p>端数: 1,000 - 999 = 1円</p>
-                    <p className="mt-2 font-semibold">結果:</p>
-                    <ul className="list-disc list-inside ml-4 space-y-1">
-                      <li>参加者A: 166円（小数部0.66...）</li>
-                      <li>参加者B: 333円 + 1円 = 334円（小数部0.33...、端数配布）</li>
-                      <li>参加者C: 500円（小数部0.00...）</li>
-                    </ul>
-                    <p className="mt-2 font-semibold">合計: 166 + 334 + 500 = 1,000円 ✓</p>
-                  </div>
+                  <p className="mt-2">四捨五入後の合計: 167 + 333 + 500 = 1,000円</p>
+                  <p className="mt-2 font-semibold">結果:</p>
+                  <ul className="list-disc list-inside ml-4 space-y-1">
+                    <li>参加者A: 167円（端数処理後）</li>
+                    <li>参加者B: 333円（端数処理後）</li>
+                    <li>参加者C: 500円（端数処理後）</li>
+                    <li>幹事: 0円（差額なし）</li>
+                  </ul>
+                  <p className="mt-2 font-semibold">合計: 167 + 333 + 500 = 1,000円 ✓</p>
+                </div>
               </div>
+            </section>
+
+            <section className="space-y-3 sm:space-y-4">
+              <h3 className="text-lg sm:text-xl font-semibold">端数処理について</h3>
+              <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+                端数処理方法は、各参加者の基本負担額をどのように処理するかを指定します。
+              </p>
+              <ul className="list-disc list-inside space-y-2 text-sm sm:text-base text-muted-foreground ml-4">
+                <li>
+                  <strong>切り上げ</strong>:
+                  指定した位で切り上げます。端数が発生した場合、幹事が差額を受け取ります（負担額が減ります）。
+                </li>
+                <li>
+                  <strong>切り下げ</strong>:
+                  指定した位で切り下げます。端数が発生した場合、幹事が差額を負担します（負担額が増えます）。
+                </li>
+                <li>
+                  <strong>四捨五入</strong>:
+                  指定した位で四捨五入します。端数が発生した場合、幹事が処理します（デフォルト）。
+                </li>
+              </ul>
+              <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mt-3">
+                端数処理の位は、処理する「位（桁）」を選択します（0.1 / 1 / 10 / 100）。
+                例えば、10を指定すると「10の位」で処理され（=100円単位に丸まる）、0.1を指定すると「0.1の位」で処理されます（=1円単位）。
+                デフォルトは 0.1 の位です。
+              </p>
             </section>
 
             <section className="space-y-3 sm:space-y-4">
@@ -91,4 +133,3 @@ function HowPage() {
     </div>
   );
 }
-

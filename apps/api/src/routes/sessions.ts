@@ -69,6 +69,8 @@ sessionsRouter.openapi(createSessionRoute, async (c) => {
         totalAmount: data.totalAmount,
         messageTemplate: data.messageTemplate || null,
         attachDetailsLink: data.attachDetailsLink ?? false,
+        roundingMethod: data.roundingMethod || 'round_half_up',
+        roundingUnit: data.roundingUnit ?? 0.1,
       })
       .returning();
 
@@ -95,11 +97,14 @@ sessionsRouter.openapi(createSessionRoute, async (c) => {
         currentParticipants.map((p) => ({
           name: p.name,
           weight: p.weight,
-        }))
+        })),
+        session.roundingMethod as 'round_up' | 'round_down' | 'round_half_up',
+        session.roundingUnit
       );
 
-      // 計算結果を保存
+      // 計算結果を保存（幹事はDBに保存しない）
       for (const calculated of calculatedAmounts) {
+        if (calculated.name === '幹事') continue; // 幹事はDBに保存しない
         const participant = currentParticipants.find(
           (p) => p.name === calculated.name
         );
@@ -178,6 +183,39 @@ sessionsRouter.openapi(getSessionRoute, async (c) => {
       .from(sessionParticipants)
       .where(eq(sessionParticipants.sessionId, session.id));
 
+    // 計算結果を再計算して「幹事」を含める
+    const calculatedAmounts = calculateShareAmounts(
+      session.totalAmount,
+      participants.map((p) => ({
+        name: p.name,
+        weight: p.weight,
+      })),
+      session.roundingMethod as 'round_up' | 'round_down' | null,
+      session.roundingUnit
+    );
+
+    // 参加者データに計算結果をマージ（幹事も含める）
+    const participantsWithOrganizer = calculatedAmounts.map((calc) => {
+      const participant = participants.find((p) => p.name === calc.name);
+      if (participant) {
+        return {
+          id: participant.id,
+          name: participant.name,
+          weight: participant.weight,
+          shareAmount: calc.shareAmount,
+        };
+      } else if (calc.name === '幹事') {
+        // 幹事はDBに存在しないので、仮のIDを設定
+        return {
+          id: 'organizer',
+          name: '幹事',
+          weight: 0,
+          shareAmount: calc.shareAmount,
+        };
+      }
+      return null;
+    }).filter((p): p is NonNullable<typeof p> => p !== null);
+
     return c.json({
       id: session.id,
       editId: session.editId,
@@ -186,12 +224,9 @@ sessionsRouter.openapi(getSessionRoute, async (c) => {
       totalAmount: session.totalAmount,
       messageTemplate: session.messageTemplate,
       attachDetailsLink: session.attachDetailsLink,
-      participants: participants.map((p) => ({
-        id: p.id,
-        name: p.name,
-        weight: p.weight,
-        shareAmount: p.shareAmount,
-      })),
+      roundingMethod: session.roundingMethod as 'round_up' | 'round_down' | 'round_half_up',
+      roundingUnit: session.roundingUnit,
+      participants: participantsWithOrganizer,
       createdAt: session.createdAt.toISOString(),
       updatedAt: session.updatedAt.toISOString(),
     });
@@ -270,6 +305,8 @@ sessionsRouter.openapi(updateSessionRoute, async (c) => {
         totalAmount?: number;
         messageTemplate?: string | null;
         attachDetailsLink?: boolean;
+        roundingMethod?: string | null;
+        roundingUnit?: number | null;
         updatedAt?: Date;
       } = {
         updatedAt: new Date(),
@@ -281,6 +318,10 @@ sessionsRouter.openapi(updateSessionRoute, async (c) => {
         updateData.messageTemplate = data.messageTemplate || null;
       if (data.attachDetailsLink !== undefined)
         updateData.attachDetailsLink = data.attachDetailsLink;
+      if (data.roundingMethod !== undefined)
+        updateData.roundingMethod = data.roundingMethod || null;
+      if (data.roundingUnit !== undefined)
+        updateData.roundingUnit = data.roundingUnit || null;
 
       await db.update(sessions).set(updateData).where(eq(sessions.id, session.id));
 
@@ -322,11 +363,14 @@ sessionsRouter.openapi(updateSessionRoute, async (c) => {
         currentParticipants.map((p) => ({
           name: p.name,
           weight: p.weight,
-        }))
+        })),
+        updatedSession.roundingMethod as 'round_up' | 'round_down' | 'round_half_up',
+        updatedSession.roundingUnit
       );
 
-      // 計算結果を保存
+      // 計算結果を保存（幹事はDBに保存しない）
       for (const calculated of calculatedAmounts) {
+        if (calculated.name === '幹事') continue; // 幹事はDBに保存しない
         const participant = currentParticipants.find(
           (p) => p.name === calculated.name
         );
@@ -338,11 +382,44 @@ sessionsRouter.openapi(updateSessionRoute, async (c) => {
         }
       }
 
-      // 更新後のデータを取得して返す
+      // 更新後のデータを取得して返す（計算結果に「幹事」を含める）
       const finalParticipants = await db
         .select()
         .from(sessionParticipants)
         .where(eq(sessionParticipants.sessionId, session.id));
+
+      // 計算結果を再計算して「幹事」を含める
+      const finalCalculatedAmounts = calculateShareAmounts(
+        updatedSession.totalAmount,
+        finalParticipants.map((p) => ({
+          name: p.name,
+          weight: p.weight,
+        })),
+        updatedSession.roundingMethod as 'round_up' | 'round_down' | 'round_half_up',
+        updatedSession.roundingUnit
+      );
+
+      // 参加者データに計算結果をマージ（幹事も含める）
+      const participantsWithOrganizer = finalCalculatedAmounts.map((calc) => {
+        const participant = finalParticipants.find((p) => p.name === calc.name);
+        if (participant) {
+          return {
+            id: participant.id,
+            name: participant.name,
+            weight: participant.weight,
+            shareAmount: calc.shareAmount,
+          };
+        } else if (calc.name === '幹事') {
+          // 幹事はDBに存在しないので、仮のIDを設定
+          return {
+            id: 'organizer',
+            name: '幹事',
+            weight: 0,
+            shareAmount: calc.shareAmount,
+          };
+        }
+        return null;
+      }).filter((p): p is NonNullable<typeof p> => p !== null);
 
       return c.json({
         id: updatedSession.id,
@@ -352,12 +429,10 @@ sessionsRouter.openapi(updateSessionRoute, async (c) => {
         totalAmount: updatedSession.totalAmount,
         messageTemplate: updatedSession.messageTemplate,
         attachDetailsLink: updatedSession.attachDetailsLink,
-        participants: finalParticipants.map((p) => ({
-          id: p.id,
-          name: p.name,
-          weight: p.weight,
-          shareAmount: p.shareAmount,
-        })),
+        roundingMethod: updatedSession.roundingMethod as 'round_up' | 'round_down' | 'round_half_up',
+        roundingUnit: updatedSession.roundingUnit,
+        organizerName: updatedSession.organizerName,
+        participants: participantsWithOrganizer,
         createdAt: updatedSession.createdAt.toISOString(),
         updatedAt: updatedSession.updatedAt.toISOString(),
       });
@@ -427,6 +502,39 @@ sessionsRouter.openapi(getSessionByResultIdRoute, async (c) => {
       .from(sessionParticipants)
       .where(eq(sessionParticipants.sessionId, session.id));
 
+    // 計算結果を再計算して「幹事」を含める
+    const calculatedAmounts = calculateShareAmounts(
+      session.totalAmount,
+      participants.map((p) => ({
+        name: p.name,
+        weight: p.weight,
+      })),
+      session.roundingMethod as 'round_up' | 'round_down' | null,
+      session.roundingUnit
+    );
+
+    // 参加者データに計算結果をマージ（幹事も含める）
+    const participantsWithOrganizer = calculatedAmounts.map((calc) => {
+      const participant = participants.find((p) => p.name === calc.name);
+      if (participant) {
+        return {
+          id: participant.id,
+          name: participant.name,
+          weight: participant.weight,
+          shareAmount: calc.shareAmount,
+        };
+      } else if (calc.name === '幹事') {
+        // 幹事はDBに存在しないので、仮のIDを設定
+        return {
+          id: 'organizer',
+          name: '幹事',
+          weight: 0,
+          shareAmount: calc.shareAmount,
+        };
+      }
+      return null;
+    }).filter((p): p is NonNullable<typeof p> => p !== null);
+
     return c.json({
       id: session.id,
       editId: session.editId,
@@ -435,12 +543,9 @@ sessionsRouter.openapi(getSessionByResultIdRoute, async (c) => {
       totalAmount: session.totalAmount,
       messageTemplate: session.messageTemplate,
       attachDetailsLink: session.attachDetailsLink,
-      participants: participants.map((p) => ({
-        id: p.id,
-        name: p.name,
-        weight: p.weight,
-        shareAmount: p.shareAmount,
-      })),
+      roundingMethod: session.roundingMethod as 'round_up' | 'round_down' | 'round_half_up',
+      roundingUnit: session.roundingUnit,
+      participants: participantsWithOrganizer,
       createdAt: session.createdAt.toISOString(),
       updatedAt: session.updatedAt.toISOString(),
     });
