@@ -35,6 +35,28 @@ function formatRoundingDigit(roundingDigit: number): string {
   return `${roundingDigit}の位`;
 }
 
+type RoundingUnit = SessionInput['roundingUnit'];
+
+function normalizeRoundingUnit(value: unknown): RoundingUnit {
+  if (value === 0.1 || value === 1 || value === 10 || value === 100) return value;
+  return 0.1;
+}
+
+function roundingUnitFromSelect(value: string): RoundingUnit {
+  switch (value) {
+    case '0.1':
+      return 0.1;
+    case '1':
+      return 1;
+    case '10':
+      return 10;
+    case '100':
+      return 100;
+    default:
+      return 0.1;
+  }
+}
+
 function EditSessionPage() {
   const { editId } = Route.useParams();
   const queryClient = useQueryClient();
@@ -117,7 +139,7 @@ function EditSessionPage() {
     messageTemplate: session.messageTemplate || '',
     attachDetailsLink: session.attachDetailsLink,
     roundingMethod: session.roundingMethod || 'round_half_up',
-    roundingUnit: session.roundingUnit || 0.1,
+    roundingUnit: normalizeRoundingUnit(session.roundingUnit),
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -320,7 +342,7 @@ function EditSessionPage() {
                     onValueChange={(value) =>
                       setFormData({
                         ...currentData,
-                        roundingUnit: parseFloat(value),
+                        roundingUnit: roundingUnitFromSelect(value),
                       })
                     }
                     required

@@ -40,3 +40,8 @@ lerna-debug.log*
 *.swo
 *~
 
+# Firebase (local cache)
+.firebase/
+
+# TypeScript incremental build info
+*.tsbuildinfo

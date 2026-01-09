@@ -22,6 +22,23 @@ export const Route = createFileRoute('/new')({
   component: NewSessionPage,
 });
 
+type RoundingUnit = CreateSessionRequest['roundingUnit'];
+
+function roundingUnitFromSelect(value: string): RoundingUnit {
+  switch (value) {
+    case '0.1':
+      return 0.1;
+    case '1':
+      return 1;
+    case '10':
+      return 10;
+    case '100':
+      return 100;
+    default:
+      return 0.1;
+  }
+}
+
 function NewSessionPage() {
   const [formData, setFormData] = useState<CreateSessionRequest>({
     title: '',
@@ -236,7 +253,7 @@ function NewSessionPage() {
                     onValueChange={(value) =>
                       setFormData({
                         ...formData,
-                        roundingUnit: parseFloat(value),
+                        roundingUnit: roundingUnitFromSelect(value),
                       })
                     }
                     required
