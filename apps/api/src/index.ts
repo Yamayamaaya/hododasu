@@ -10,10 +10,8 @@ import sessionsRouter from './routes/sessions';
 const baseApp = new OpenAPIHono();
 
 // CORS設定（Hono公式ミドルウェアを使用）
-// OpenAPIHonoの型定義とcorsミドルウェアの型が完全に一致しないが、実行時には問題なく動作する
 baseApp.use(
   '*',
-  // @ts-expect-error - 型定義の不一致（実行時には正常に動作）
   cors({
     origin: ['http://localhost:3000'], // 開発環境のフロントエンドURL
     allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
