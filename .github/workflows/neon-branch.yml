@@ -144,10 +144,10 @@ jobs:
       # 3. Neonブランチを削除
       - name: Delete Neon Branch
         if: github.event.action == 'closed'
-        uses: neondatabase/delete-branch-action@v1
+        uses: neondatabase/delete-branch-action@v3
         with:
           project_id: ${{ vars.NEON_PROJECT_ID }}
-          branch_name: pr-${{ github.event.pull_request.number }}
+          branch: pr-${{ github.event.pull_request.number }}
           api_key: ${{ secrets.NEON_API_KEY }}
 
       # PRクローズ時のコメント
