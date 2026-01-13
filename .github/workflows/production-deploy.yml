@@ -22,7 +22,6 @@ jobs:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
           projectId: '${{ secrets.FIREBASE_PROJECT_ID }}'
-          target: 'hosting'
 
       # Cloud Build実行（API本番デプロイ）
       - name: Setup GCloud
@@ -38,7 +37,7 @@ jobs:
             --substitutions=_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }},_REGION=asia-northeast1,_SERVICE_NAME=hododasu-api \
             --async \
             --source=.
-          
+
           echo "✅ Cloud Build triggered for production deployment"
         env:
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
