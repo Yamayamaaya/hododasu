@@ -22,12 +22,13 @@ jobs:
           api_key: ${{ secrets.NEON_API_KEY }}
 
       # Secret ManagerにステージングDB接続URLを保存（Cloud Buildで使用）
-      - name: Store Database URL in Secret Manager
+      - name: Setup GCloud for Secret Manager
         if: github.event.action != 'closed'
         uses: google-github-actions/setup-gcloud@v2
         with:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           project_id: ${{ secrets.GCP_PROJECT_ID }}
+          export_default_credentials: true
       
       - name: Save Database URL to Secret Manager
         if: github.event.action != 'closed'
@@ -35,6 +36,10 @@ jobs:
           PR_NUMBER=${{ github.event.pull_request.number }}
           DB_URL="${{ steps.create-branch.outputs.db_url }}"
           SECRET_NAME="NEON_STAGING_DB_PR_${PR_NUMBER}"
+          GCP_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
+          
+          # プロジェクトを設定
+          gcloud config set project "${GCP_PROJECT_ID}"
           
           # シークレットが存在する場合は更新、存在しない場合は作成
           if gcloud secrets describe "${SECRET_NAME}" --project="${GCP_PROJECT_ID}" >/dev/null 2>&1; then
@@ -54,17 +59,22 @@ jobs:
         with:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           project_id: ${{ secrets.GCP_PROJECT_ID }}
+          export_default_credentials: true
       
       - name: Trigger Cloud Build
         if: github.event.action != 'closed'
         run: |
           PR_NUMBER=${{ github.event.pull_request.number }}
           COMMIT_SHA="${{ github.event.pull_request.head.sha }}"
+          GCP_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
+          
+          # プロジェクトを設定
+          gcloud config set project "${GCP_PROJECT_ID}"
           
           # Cloud Buildを直接実行（トリガーに依存しない）
           gcloud builds submit \
             --config=cloudbuild.yaml \
-            --substitutions=_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }},_REGION=asia-northeast1,_SERVICE_NAME=hododasu-api,_PR_NUMBER=${PR_NUMBER} \
+            --substitutions=_PROJECT_ID=${GCP_PROJECT_ID},_REGION=asia-northeast1,_SERVICE_NAME=hododasu-api,_PR_NUMBER=${PR_NUMBER} \
             --async \
             --source=.
           
@@ -103,6 +113,7 @@ jobs:
         with:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           project_id: ${{ secrets.GCP_PROJECT_ID }}
+          export_default_credentials: true
 
       # 1. Cloud Runプレビュー環境を削除
       - name: Delete Cloud Run Preview Service
@@ -110,6 +121,10 @@ jobs:
         run: |
           PR_NUMBER=${{ github.event.pull_request.number }}
           SERVICE_NAME="hododasu-api-preview-${PR_NUMBER}"
+          GCP_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
+          
+          # プロジェクトを設定
+          gcloud config set project "${GCP_PROJECT_ID}"
           
           # サービスが存在する場合のみ削除
           if gcloud run services describe "${SERVICE_NAME}" --region=asia-northeast1 --project="${GCP_PROJECT_ID}" >/dev/null 2>&1; then
@@ -130,6 +145,10 @@ jobs:
         run: |
           PR_NUMBER=${{ github.event.pull_request.number }}
           SECRET_NAME="NEON_STAGING_DB_PR_${PR_NUMBER}"
+          GCP_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
+          
+          # プロジェクトを設定
+          gcloud config set project "${GCP_PROJECT_ID}"
           
           # シークレットを削除（存在する場合）
           if gcloud secrets describe "${SECRET_NAME}" --project="${GCP_PROJECT_ID}" >/dev/null 2>&1; then
