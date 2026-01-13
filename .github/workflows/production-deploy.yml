@@ -36,7 +36,7 @@ jobs:
           # マイグレーションとAPIデプロイは並列実行される
           gcloud builds submit \
             --config=cloudbuild.yaml \
-            --substitutions=_PROJECT_ID=${GCP_PROJECT_ID},_REGION=asia-northeast1,_SERVICE_NAME=hododasu-api
+            --substitutions=_REGION=asia-northeast1,_SERVICE_NAME=hododasu-api
 
           echo "✅ Cloud Build completed for production deployment"
         env:

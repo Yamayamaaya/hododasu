@@ -255,7 +255,6 @@ options:
 
 # 置換変数（Cloud Buildトリガーで設定）
 substitutions:
-  _PROJECT_ID: '' # GCPプロジェクトID
   _REGION: 'asia-northeast1' # Cloud Runリージョン
   _SERVICE_NAME: 'hododasu-api' # Cloud Runサービス名
   _PR_NUMBER: '' # PR番号（PR時のみ設定、GitHub Actionsから取得）
