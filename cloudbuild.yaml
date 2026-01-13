@@ -1,0 +1,262 @@
+steps:
+  # ============================================
+  # 共通ステップ: 依存関係のインストールとビルド
+  # ============================================
+
+  # pnpmのインストール
+  - name: 'node:20'
+    entrypoint: 'npm'
+    args: ['install', '-g', 'pnpm@8.15.0']
+    id: 'install-pnpm'
+
+  # 依存関係のインストール
+  - name: 'node:20'
+    entrypoint: 'pnpm'
+    args: ['install', '--frozen-lockfile']
+    id: 'install-deps'
+    waitFor: ['install-pnpm']
+
+  # Lint実行
+  - name: 'node:20'
+    entrypoint: 'pnpm'
+    args: ['lint']
+    id: 'lint'
+    waitFor: ['install-deps']
+
+  # 型チェック
+  - name: 'node:20'
+    entrypoint: 'pnpm'
+    args: ['type-check']
+    id: 'type-check'
+    waitFor: ['install-deps']
+
+  # ビルド
+  - name: 'node:20'
+    entrypoint: 'pnpm'
+    args: ['build']
+    id: 'build'
+    waitFor: ['install-deps']
+
+  # ============================================
+  # PR作成時: プレビューデプロイ
+  # 注意: NeonブランチはGitHub Actionsで作成されます
+  # ============================================
+
+  # ステージングDBマイグレーション（PR時のみ）
+  # GitHub Actionsで作成されたNeonブランチの接続URLを使用
+  - name: 'node:20'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -e
+
+        # PR番号を取得
+        PR_NUMBER=${_PR_NUMBER:-${BRANCH_NAME#pr-}}
+
+        # PR番号が取得できない場合はスキップ
+        if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" = "$BRANCH_NAME" ]; then
+          echo "Not a PR build, skipping staging migration"
+          exit 0
+        fi
+
+        # Secret ManagerからステージングDB接続URLを取得
+        # 形式: NEON_STAGING_DB_PR_{PR_NUMBER}
+        # GitHub Actionsで作成されるまで最大30秒待機（リトライ）
+        MAX_RETRIES=30
+        RETRY_COUNT=0
+        STAGING_DB_URL=""
+
+        while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+          STAGING_DB_URL=$(gcloud secrets versions access latest --secret="NEON_STAGING_DB_PR_${PR_NUMBER}" 2>/dev/null || echo "")
+          
+          if [ -n "$STAGING_DB_URL" ]; then
+            echo "✅ Staging database URL found after ${RETRY_COUNT} retries"
+            break
+          fi
+          
+          RETRY_COUNT=$((RETRY_COUNT + 1))
+          if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+            echo "Waiting for Secret Manager entry... (${RETRY_COUNT}/${MAX_RETRIES})"
+            sleep 1
+          fi
+        done
+
+        if [ -z "$STAGING_DB_URL" ]; then
+          echo "❌ Error: Staging database URL not found in Secret Manager for PR ${PR_NUMBER}"
+          echo "GitHub Actions may not have completed yet. Please check the GitHub Actions workflow."
+          exit 1
+        fi
+
+        echo "Running migrations on staging database for PR ${PR_NUMBER}..."
+        export DATABASE_URL_DIRECT="${STAGING_DB_URL}"
+        export DATABASE_URL_POOLED="${STAGING_DB_URL}"
+
+        cd /workspace
+        pnpm --filter api db:migrate
+    id: 'migrate-staging-db'
+    waitFor: ['build']
+    env:
+      - 'BRANCH_NAME=$BRANCH_NAME'
+      - '_PR_NUMBER=$_PR_NUMBER'
+
+  # Dockerイメージビルド（API）
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/hododasu-api:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/hododasu-api:latest'
+      - '-f'
+      - 'Dockerfile.api.prod'
+      - '.'
+    id: 'build-docker-image'
+    waitFor: ['build']
+
+  # Dockerイメージプッシュ
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/hododasu-api:$COMMIT_SHA']
+    id: 'push-docker-image'
+    waitFor: ['build-docker-image']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/hododasu-api:latest']
+    id: 'push-docker-image-latest'
+    waitFor: ['build-docker-image']
+
+  # Cloud Runプレビューデプロイ（PR時のみ）
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -e
+
+        # PR番号を取得
+        PR_NUMBER=${_PR_NUMBER:-${BRANCH_NAME#pr-}}
+
+        if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" = "$BRANCH_NAME" ]; then
+          echo "Not a PR build, skipping Cloud Run preview deploy"
+          exit 0
+        fi
+
+        SERVICE_NAME="hododasu-api-preview-${PR_NUMBER}"
+
+        # Secret ManagerからステージングDB接続URLを取得
+        STAGING_DB_URL=$(gcloud secrets versions access latest --secret="NEON_STAGING_DB_PR_${PR_NUMBER}" 2>/dev/null || echo "")
+
+        if [ -z "$STAGING_DB_URL" ]; then
+          echo "Error: Staging database URL not found for PR ${PR_NUMBER}"
+          echo "Make sure GitHub Actions has created the Neon branch"
+          exit 1
+        fi
+
+        # Cloud Runにデプロイ
+        gcloud run deploy ${SERVICE_NAME} \
+          --image gcr.io/$PROJECT_ID/hododasu-api:$COMMIT_SHA \
+          --region ${_REGION} \
+          --platform managed \
+          --allow-unauthenticated \
+          --set-env-vars "PORT=8787,DATABASE_URL_POOLED=${STAGING_DB_URL},DATABASE_URL_DIRECT=${STAGING_DB_URL}" \
+          --memory 512Mi \
+          --cpu 1 \
+          --max-instances 10 \
+          --min-instances 0
+    id: 'deploy-cloud-run-preview'
+    waitFor: ['push-docker-image']
+    env:
+      - 'BRANCH_NAME=$BRANCH_NAME'
+      - '_PR_NUMBER=$_PR_NUMBER'
+      - '_REGION=$_REGION'
+
+  # ============================================
+  # mainブランチpush時: 本番デプロイ
+  # ============================================
+
+  # Cloud Run本番デプロイ（mainブランチ時のみ）
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -e
+
+        if [ "$BRANCH_NAME" != "main" ]; then
+          echo "Not main branch, skipping Cloud Run production deploy"
+          exit 0
+        fi
+
+        # Secret Managerから本番DB接続URLを取得
+        PROD_DB_URL_POOLED=$(gcloud secrets versions access latest --secret="NEON_PROD_DATABASE_URL_POOLED")
+        PROD_DB_URL_DIRECT=$(gcloud secrets versions access latest --secret="NEON_PROD_DATABASE_URL_DIRECT")
+
+        if [ -z "$PROD_DB_URL_POOLED" ] || [ -z "$PROD_DB_URL_DIRECT" ]; then
+          echo "Error: Production database URLs not found in Secret Manager"
+          exit 1
+        fi
+
+        # Cloud Runに本番デプロイ
+        gcloud run deploy ${_SERVICE_NAME} \
+          --image gcr.io/$PROJECT_ID/hododasu-api:$COMMIT_SHA \
+          --region ${_REGION} \
+          --platform managed \
+          --allow-unauthenticated \
+          --set-env-vars "PORT=8787,DATABASE_URL_POOLED=${PROD_DB_URL_POOLED},DATABASE_URL_DIRECT=${PROD_DB_URL_DIRECT}" \
+          --memory 512Mi \
+          --cpu 1 \
+          --max-instances 10 \
+          --min-instances 0
+    id: 'deploy-cloud-run-prod'
+    waitFor: ['push-docker-image']
+    env:
+      - 'BRANCH_NAME=$BRANCH_NAME'
+      - '_REGION=$_REGION'
+      - '_SERVICE_NAME=$_SERVICE_NAME'
+
+  # 本番DBマイグレーション（mainブランチ時のみ）
+  - name: 'node:20'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -e
+
+        if [ "$BRANCH_NAME" != "main" ]; then
+          echo "Not main branch, skipping production migration"
+          exit 0
+        fi
+
+        # Secret Managerから本番DB接続URLを取得
+        PROD_DB_URL_DIRECT=$(gcloud secrets versions access latest --secret="NEON_PROD_DATABASE_URL_DIRECT")
+
+        if [ -z "$PROD_DB_URL_DIRECT" ]; then
+          echo "Error: Production database URL not found in Secret Manager"
+          exit 1
+        fi
+
+        echo "Running migrations on production database..."
+        export DATABASE_URL_DIRECT="${PROD_DB_URL_DIRECT}"
+        export DATABASE_URL_POOLED="${PROD_DB_URL_DIRECT}"
+
+        cd /workspace
+        pnpm --filter api db:migrate
+    id: 'migrate-prod-db'
+    waitFor: ['deploy-cloud-run-prod']
+    env:
+      - 'BRANCH_NAME=$BRANCH_NAME'
+
+# タイムアウト設定（60分）
+timeout: '3600s'
+
+# オプション設定
+options:
+  machineType: 'E2_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY
+
+# 置換変数（Cloud Buildトリガーで設定）
+substitutions:
+  _PROJECT_ID: '' # GCPプロジェクトID
+  _REGION: 'asia-northeast1' # Cloud Runリージョン
+  _SERVICE_NAME: 'hododasu-api' # Cloud Runサービス名
+  _PR_NUMBER: '' # PR番号（PR時のみ設定、GitHub Actionsから取得）

@@ -1,0 +1,164 @@
+name: Neon Branch Management
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+
+jobs:
+  manage-neon-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # PR作成/更新時: Neonブランチを作成
+      - name: Create Neon Branch
+        if: github.event.action != 'closed'
+        uses: neondatabase/create-branch-action@v6
+        id: create-branch
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          branch_name: pr-${{ github.event.pull_request.number }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+
+      # Secret ManagerにステージングDB接続URLを保存（Cloud Buildで使用）
+      - name: Store Database URL in Secret Manager
+        if: github.event.action != 'closed'
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+      
+      - name: Save Database URL to Secret Manager
+        if: github.event.action != 'closed'
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          DB_URL="${{ steps.create-branch.outputs.db_url }}"
+          SECRET_NAME="NEON_STAGING_DB_PR_${PR_NUMBER}"
+          
+          # シークレットが存在する場合は更新、存在しない場合は作成
+          if gcloud secrets describe "${SECRET_NAME}" --project="${GCP_PROJECT_ID}" >/dev/null 2>&1; then
+            echo -n "${DB_URL}" | gcloud secrets versions add "${SECRET_NAME}" --data-file=- --project="${GCP_PROJECT_ID}"
+          else
+            echo -n "${DB_URL}" | gcloud secrets create "${SECRET_NAME}" --data-file=- --project="${GCP_PROJECT_ID}"
+          fi
+          
+          echo "✅ Database URL saved to Secret Manager: ${SECRET_NAME}"
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+
+      # Cloud Buildを実行（Neonブランチ作成完了後）
+      - name: Setup GCloud
+        if: github.event.action != 'closed'
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+      
+      - name: Trigger Cloud Build
+        if: github.event.action != 'closed'
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          COMMIT_SHA="${{ github.event.pull_request.head.sha }}"
+          
+          # Cloud Buildを直接実行（トリガーに依存しない）
+          gcloud builds submit \
+            --config=cloudbuild.yaml \
+            --substitutions=_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }},_REGION=asia-northeast1,_SERVICE_NAME=hododasu-api,_PR_NUMBER=${PR_NUMBER} \
+            --async \
+            --source=.
+          
+          echo "✅ Cloud Build triggered for PR ${PR_NUMBER}"
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+
+      # PRにコメント
+      - name: Comment PR with Database URL
+        if: github.event.action != 'closed'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const dbUrl = '${{ steps.create-branch.outputs.db_url }}';
+            const comment = `✅ Neon branch created for this PR
+            
+            Database URL has been saved to Secret Manager as \`NEON_STAGING_DB_PR_${{ github.event.pull_request.number }}\`
+            
+            Cloud Build has been triggered for preview deployment.`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      # ============================================
+      # PRクローズ時: クリーンアップ
+      # ============================================
+      
+      # GCloud認証（クリーンアップ用）
+      - name: Setup GCloud for Cleanup
+        if: github.event.action == 'closed'
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      # 1. Cloud Runプレビュー環境を削除
+      - name: Delete Cloud Run Preview Service
+        if: github.event.action == 'closed'
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          SERVICE_NAME="hododasu-api-preview-${PR_NUMBER}"
+          
+          # サービスが存在する場合のみ削除
+          if gcloud run services describe "${SERVICE_NAME}" --region=asia-northeast1 --project="${GCP_PROJECT_ID}" >/dev/null 2>&1; then
+            gcloud run services delete "${SERVICE_NAME}" \
+              --region=asia-northeast1 \
+              --project="${GCP_PROJECT_ID}" \
+              --quiet
+            echo "✅ Cloud Run preview service deleted: ${SERVICE_NAME}"
+          else
+            echo "Cloud Run preview service ${SERVICE_NAME} not found, skipping deletion"
+          fi
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+
+      # 2. Secret ManagerからステージングDB接続URLを削除
+      - name: Delete Secret from Secret Manager
+        if: github.event.action == 'closed'
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          SECRET_NAME="NEON_STAGING_DB_PR_${PR_NUMBER}"
+          
+          # シークレットを削除（存在する場合）
+          if gcloud secrets describe "${SECRET_NAME}" --project="${GCP_PROJECT_ID}" >/dev/null 2>&1; then
+            gcloud secrets delete "${SECRET_NAME}" --project="${GCP_PROJECT_ID}" --quiet
+            echo "✅ Secret deleted: ${SECRET_NAME}"
+          else
+            echo "Secret ${SECRET_NAME} not found, skipping deletion"
+          fi
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+
+      # 3. Neonブランチを削除
+      - name: Delete Neon Branch
+        if: github.event.action == 'closed'
+        uses: neondatabase/delete-branch-action@v1
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          branch_name: pr-${{ github.event.pull_request.number }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+
+      # PRクローズ時のコメント
+      - name: Comment PR on Cleanup
+        if: github.event.action == 'closed'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🗑️ PR cleanup completed:\n- Cloud Run preview service deleted\n- Secret Manager entry deleted\n- Neon branch deleted'
+            });
