@@ -51,14 +51,12 @@ steps:
       - |
         set -e
 
-        # PR番号を取得
-        PR_NUMBER=${_PR_NUMBER:-${BRANCH_NAME#pr-}}
-
-        # PR番号が取得できない場合はスキップ
-        if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" = "$BRANCH_NAME" ]; then
-          echo "Not a PR build, skipping staging migration"
-          exit 0
+        # PR番号を取得（GitHub Actionsから必須で渡される）
+        if [ -z "$_PR_NUMBER" ]; then
+          echo "Error: _PR_NUMBER is required for PR builds"
+          exit 1
         fi
+        PR_NUMBER="$_PR_NUMBER"
 
         # Secret ManagerからステージングDB接続URLを取得
         # 形式: NEON_STAGING_DB_PR_{PR_NUMBER}
@@ -133,13 +131,12 @@ steps:
       - |
         set -e
 
-        # PR番号を取得
-        PR_NUMBER=${_PR_NUMBER:-${BRANCH_NAME#pr-}}
-
-        if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" = "$BRANCH_NAME" ]; then
+        # PR番号を取得（GitHub Actionsから必須で渡される）
+        if [ -z "$_PR_NUMBER" ]; then
           echo "Not a PR build, skipping Cloud Run preview deploy"
           exit 0
         fi
+        PR_NUMBER="$_PR_NUMBER"
 
         SERVICE_NAME="hododasu-api-preview-${PR_NUMBER}"
 
@@ -174,7 +171,41 @@ steps:
   # mainブランチpush時: 本番デプロイ
   # ============================================
 
+  # 本番DBマイグレーション（mainブランチ時のみ）
+  # APIデプロイと並列実行（互換性の問題はリリース時に限り許容）
+  - name: 'node:20'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -e
+
+        if [ "$BRANCH_NAME" != "main" ]; then
+          echo "Not main branch, skipping production migration"
+          exit 0
+        fi
+
+        # Secret Managerから本番DB接続URLを取得
+        PROD_DB_URL_DIRECT=$(gcloud secrets versions access latest --secret="NEON_PROD_DATABASE_URL_DIRECT")
+
+        if [ -z "$PROD_DB_URL_DIRECT" ]; then
+          echo "Error: Production database URL not found in Secret Manager"
+          exit 1
+        fi
+
+        echo "Running migrations on production database..."
+        export DATABASE_URL_DIRECT="${PROD_DB_URL_DIRECT}"
+        export DATABASE_URL_POOLED="${PROD_DB_URL_DIRECT}"
+
+        cd /workspace
+        pnpm --filter api db:migrate
+    id: 'migrate-prod-db'
+    waitFor: ['push-docker-image']
+    env:
+      - 'BRANCH_NAME=$BRANCH_NAME'
+
   # Cloud Run本番デプロイ（mainブランチ時のみ）
+  # マイグレーションと並列実行（互換性の問題はリリース時に限り許容）
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'bash'
     args:
@@ -213,38 +244,6 @@ steps:
       - 'BRANCH_NAME=$BRANCH_NAME'
       - '_REGION=$_REGION'
       - '_SERVICE_NAME=$_SERVICE_NAME'
-
-  # 本番DBマイグレーション（mainブランチ時のみ）
-  - name: 'node:20'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        set -e
-
-        if [ "$BRANCH_NAME" != "main" ]; then
-          echo "Not main branch, skipping production migration"
-          exit 0
-        fi
-
-        # Secret Managerから本番DB接続URLを取得
-        PROD_DB_URL_DIRECT=$(gcloud secrets versions access latest --secret="NEON_PROD_DATABASE_URL_DIRECT")
-
-        if [ -z "$PROD_DB_URL_DIRECT" ]; then
-          echo "Error: Production database URL not found in Secret Manager"
-          exit 1
-        fi
-
-        echo "Running migrations on production database..."
-        export DATABASE_URL_DIRECT="${PROD_DB_URL_DIRECT}"
-        export DATABASE_URL_POOLED="${PROD_DB_URL_DIRECT}"
-
-        cd /workspace
-        pnpm --filter api db:migrate
-    id: 'migrate-prod-db'
-    waitFor: ['deploy-cloud-run-prod']
-    env:
-      - 'BRANCH_NAME=$BRANCH_NAME'
 
 # タイムアウト設定（60分）
 timeout: '3600s'
