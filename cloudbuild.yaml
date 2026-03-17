@@ -12,28 +12,28 @@ steps:
   # 依存関係のインストール
   - name: 'node:20'
     entrypoint: 'bash'
-    args: ['-c', 'PATH=/workspace/bin:$PATH pnpm install --frozen-lockfile']
+    args: ['-c', 'PATH=/workspace/bin:$$PATH pnpm install --frozen-lockfile']
     id: 'install-deps'
     waitFor: ['install-pnpm']
 
   # Lint実行
   - name: 'node:20'
     entrypoint: 'bash'
-    args: ['-c', 'PATH=/workspace/bin:$PATH pnpm lint']
+    args: ['-c', 'PATH=/workspace/bin:$$PATH pnpm lint']
     id: 'lint'
     waitFor: ['install-deps']
 
   # 型チェック
   - name: 'node:20'
     entrypoint: 'bash'
-    args: ['-c', 'PATH=/workspace/bin:$PATH pnpm type-check']
+    args: ['-c', 'PATH=/workspace/bin:$$PATH pnpm type-check']
     id: 'type-check'
     waitFor: ['install-deps']
 
   # ビルド
   - name: 'node:20'
     entrypoint: 'bash'
-    args: ['-c', 'PATH=/workspace/bin:$PATH pnpm build']
+    args: ['-c', 'PATH=/workspace/bin:$$PATH pnpm build']
     id: 'build'
     waitFor: ['install-deps']
 
@@ -89,7 +89,7 @@ steps:
         echo "Running migrations on staging database for PR $${PR_NUMBER}..."
         export DATABASE_URL_DIRECT="$${STAGING_DB_URL}"
         export DATABASE_URL_POOLED="$${STAGING_DB_URL}"
-        export PATH="/workspace/bin:$PATH"
+        export PATH="/workspace/bin:$$PATH"
 
         cd /workspace
         pnpm --filter api db:migrate
@@ -197,7 +197,7 @@ steps:
         echo "Running migrations on production database..."
         export DATABASE_URL_DIRECT="$${PROD_DB_URL_DIRECT}"
         export DATABASE_URL_POOLED="$${PROD_DB_URL_DIRECT}"
-        export PATH="/workspace/bin:$PATH"
+        export PATH="/workspace/bin:$$PATH"
 
         cd /workspace
         pnpm --filter api db:migrate
