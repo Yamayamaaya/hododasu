@@ -211,8 +211,7 @@ steps:
       - |
         set -e
 
-        EFFECTIVE_BRANCH="${BRANCH_NAME:-$_BRANCH_NAME}"
-        if [ "$EFFECTIVE_BRANCH" != "main" ]; then
+        if [ "$BRANCH_NAME" != "main" ] && [ "$_BRANCH_NAME" != "main" ]; then
           echo "Not main branch, skipping prod DB URL fetch"
           exit 0
         fi
@@ -243,8 +242,7 @@ steps:
       - |
         set -e
 
-        EFFECTIVE_BRANCH="${BRANCH_NAME:-$_BRANCH_NAME}"
-        if [ "$EFFECTIVE_BRANCH" != "main" ]; then
+        if [ "$BRANCH_NAME" != "main" ] && [ "$_BRANCH_NAME" != "main" ]; then
           echo "Not main branch, skipping production migration"
           exit 0
         fi
@@ -283,8 +281,7 @@ steps:
       - |
         set -e
 
-        EFFECTIVE_BRANCH="${BRANCH_NAME:-$_BRANCH_NAME}"
-        if [ "$EFFECTIVE_BRANCH" != "main" ]; then
+        if [ "$BRANCH_NAME" != "main" ] && [ "$_BRANCH_NAME" != "main" ]; then
           echo "Not main branch, skipping Cloud Run production deploy"
           exit 0
         fi
