@@ -148,6 +148,11 @@ jobs:
           projectId: '${{ secrets.FIREBASE_PROJECT_ID }}'
           channelId: 'pr-${{ github.event.pull_request.number }}'
 
+      - name: Debug Firebase outputs
+        run: |
+          echo "details_url: ${{ steps.firebase-deploy.outputs.details_url }}"
+          echo "urls: ${{ steps.firebase-deploy.outputs.urls }}"
+
       - name: Restore original firebase.json
         if: always()
         run: mv firebase.json.backup firebase.json || true
