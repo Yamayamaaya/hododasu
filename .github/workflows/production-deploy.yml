@@ -14,7 +14,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Cloud Build実行（マイグレーション + API本番デプロイ、並列実行）
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
@@ -28,19 +27,13 @@ jobs:
       - name: Deploy API to Cloud Run
         run: |
           GCP_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
-
-          # プロジェクトを設定
-          gcloud config set project "${GCP_PROJECT_ID}"
-
-          # Cloud Buildを実行（完了を待つ）
-          # マイグレーションとAPIデプロイは並列実行される
           COMMIT_SHA="${{ github.sha }}"
 
-          gcloud builds submit \
-            --config=cloudbuild.yaml \
-            --substitutions=_REGION=asia-northeast1,_SERVICE_NAME=hododasu-api,_BRANCH_NAME=main,COMMIT_SHA=${COMMIT_SHA}
+          gcloud config set project "${GCP_PROJECT_ID}"
 
-          echo "✅ Cloud Build completed for production deployment"
+          gcloud builds submit \
+            --config=cloudbuild.prod.yaml \
+            --substitutions=_REGION=asia-northeast1,_SERVICE_NAME=hododasu-api,COMMIT_SHA=${COMMIT_SHA}
         env:
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
 
@@ -76,8 +69,6 @@ jobs:
       - name: Build web app
         run: pnpm --filter web build
 
-      # Firebase Hosting本番デプロイ
-      # APIデプロイと並列実行可能（APIサービスが存在すればOK）
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
