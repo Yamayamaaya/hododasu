@@ -5,21 +5,14 @@ on:
     types: [opened, synchronize, reopened, closed]
 
 jobs:
-  preview:
+  setup:
+    if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: write
-      checks: write
+    outputs:
+      db_url: ${{ steps.create-branch.outputs.db_url }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      # ============================================
-      # PR作成/更新時: プレビュー環境のデプロイ
-      # ============================================
-
-      # 1. Neonブランチを作成
       - name: Create Neon Branch
         if: github.event.action == 'opened' || github.event.action == 'reopened'
         uses: neondatabase/create-branch-action@v6
@@ -29,15 +22,14 @@ jobs:
           branch_name: pr-${{ github.event.pull_request.number }}
           api_key: ${{ secrets.NEON_API_KEY }}
 
-      # 2. Secret ManagerにステージングDB接続URLを保存
       - name: Authenticate to Google Cloud
-        if: github.event.action != 'closed'
+        if: github.event.action == 'opened' || github.event.action == 'reopened'
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Setup GCloud
-        if: github.event.action != 'closed'
+        if: github.event.action == 'opened' || github.event.action == 'reopened'
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
@@ -50,79 +42,84 @@ jobs:
           SECRET_NAME="NEON_STAGING_DB_PR_${PR_NUMBER}"
           GCP_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
 
-          # プロジェクトを設定
           gcloud config set project "${GCP_PROJECT_ID}"
 
-          # シークレットが存在する場合は更新、存在しない場合は作成
           if gcloud secrets describe "${SECRET_NAME}" --project="${GCP_PROJECT_ID}" >/dev/null 2>&1; then
             echo -n "${DB_URL}" | gcloud secrets versions add "${SECRET_NAME}" --data-file=- --project="${GCP_PROJECT_ID}"
           else
             echo -n "${DB_URL}" | gcloud secrets create "${SECRET_NAME}" --data-file=- --project="${GCP_PROJECT_ID}"
           fi
-
-          echo "✅ Database URL saved to Secret Manager: ${SECRET_NAME}"
         env:
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
 
-      # 3. Cloud Buildを実行（APIデプロイ）
-      # 認証は前のステップで完了しているため、setup-gcloudのみ実行
-      - name: Setup GCloud for Cloud Build
-        if: github.event.action != 'closed'
+  deploy-api:
+    if: github.event.action != 'closed'
+    needs: [setup]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup GCloud
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
       - name: Deploy API to Cloud Run (Preview)
-        if: github.event.action != 'closed'
         run: |
           PR_NUMBER=${{ github.event.pull_request.number }}
           COMMIT_SHA="${{ github.event.pull_request.head.sha }}"
           GCP_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
 
-          # プロジェクトを設定
           gcloud config set project "${GCP_PROJECT_ID}"
 
-          # Cloud Buildを実行（完了を待つ）
           gcloud builds submit \
             --config=cloudbuild.yaml \
             --substitutions=_REGION=asia-northeast1,_PR_NUMBER=${PR_NUMBER},COMMIT_SHA=${COMMIT_SHA}
-
-          echo "✅ Cloud Build completed for PR ${PR_NUMBER}"
         env:
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
 
-      # 4. Webアプリをビルド
+  deploy-frontend:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Setup Node.js
-        if: github.event.action != 'closed'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
       - name: Setup pnpm
-        if: github.event.action != 'closed'
         uses: pnpm/action-setup@v2
         with:
           version: 8.15.0
 
       - name: Install dependencies
-        if: github.event.action != 'closed'
         run: pnpm install --frozen-lockfile
 
       - name: Build web app
-        if: github.event.action != 'closed'
         run: pnpm --filter web build
 
-      # 5. firebase.jsonを更新（プレビュー用Cloud Runサービスを参照）
       - name: Update firebase.json for preview environment
-        if: github.event.action != 'closed'
         run: |
           PR_NUMBER=${{ github.event.pull_request.number }}
           PREVIEW_SERVICE_NAME="hododasu-api-preview-${PR_NUMBER}"
 
-          # firebase.jsonをバックアップ
           cp firebase.json firebase.json.backup
 
-          # PRプレビュー用のfirebase.jsonを生成
           cat > firebase.json << EOF
           {
             "hosting": {
@@ -145,11 +142,7 @@ jobs:
           }
           EOF
 
-          echo "✅ Updated firebase.json to use preview service: ${PREVIEW_SERVICE_NAME}"
-
-      # 6. Firebase Hostingにデプロイ
       - name: Deploy to Firebase Hosting (preview)
-        if: github.event.action != 'closed'
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
@@ -157,23 +150,23 @@ jobs:
           projectId: '${{ secrets.FIREBASE_PROJECT_ID }}'
           channelId: 'pr-${{ github.event.pull_request.number }}'
 
-      # 7. firebase.jsonを復元
       - name: Restore original firebase.json
-        if: always() && github.event.action != 'closed'
-        run: |
-          mv firebase.json.backup firebase.json || true
+        if: always()
+        run: mv firebase.json.backup firebase.json || true
 
-      # 8. PRにコメント
+  comment-pr:
+    if: github.event.action != 'closed'
+    needs: [setup, deploy-api, deploy-frontend]
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
       - name: Comment PR with Preview URLs
-        if: github.event.action != 'closed'
         uses: actions/github-script@v7
         with:
           script: |
-            const dbUrl = '${{ steps.create-branch.outputs.db_url }}';
             const prNumber = ${{ github.event.pull_request.number }};
             const comment = `✅ Preview environment deployed for PR #${prNumber}
-
-            **Database**: Staging database URL saved to Secret Manager as \`NEON_STAGING_DB_PR_${prNumber}\`
 
             **API**: \`hododasu-api-preview-${prNumber}\` deployed to Cloud Run
 
@@ -188,80 +181,66 @@ jobs:
               body: comment
             });
 
-      # ============================================
-      # PRクローズ時: クリーンアップ
-      # ============================================
-
-      # GCloud認証（クリーンアップ用）
-      - name: Authenticate to Google Cloud for Cleanup
-        if: github.event.action == 'closed'
+  cleanup:
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Setup GCloud for Cleanup
-        if: github.event.action == 'closed'
+      - name: Setup GCloud
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
-      # 1. Cloud Runプレビュー環境を削除
       - name: Delete Cloud Run Preview Service
-        if: github.event.action == 'closed'
         run: |
           PR_NUMBER=${{ github.event.pull_request.number }}
           SERVICE_NAME="hododasu-api-preview-${PR_NUMBER}"
           GCP_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
 
-          # プロジェクトを設定
           gcloud config set project "${GCP_PROJECT_ID}"
 
-          # サービスが存在する場合のみ削除
           if gcloud run services describe "${SERVICE_NAME}" --region=asia-northeast1 --project="${GCP_PROJECT_ID}" >/dev/null 2>&1; then
             gcloud run services delete "${SERVICE_NAME}" \
               --region=asia-northeast1 \
               --project="${GCP_PROJECT_ID}" \
               --quiet
-            echo "✅ Cloud Run preview service deleted: ${SERVICE_NAME}"
           else
             echo "Cloud Run preview service ${SERVICE_NAME} not found, skipping deletion"
           fi
         env:
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
 
-      # 2. Secret ManagerからステージングDB接続URLを削除
       - name: Delete Secret from Secret Manager
-        if: github.event.action == 'closed'
         run: |
           PR_NUMBER=${{ github.event.pull_request.number }}
           SECRET_NAME="NEON_STAGING_DB_PR_${PR_NUMBER}"
           GCP_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
 
-          # プロジェクトを設定
           gcloud config set project "${GCP_PROJECT_ID}"
 
-          # シークレットを削除（存在する場合）
           if gcloud secrets describe "${SECRET_NAME}" --project="${GCP_PROJECT_ID}" >/dev/null 2>&1; then
             gcloud secrets delete "${SECRET_NAME}" --project="${GCP_PROJECT_ID}" --quiet
-            echo "✅ Secret deleted: ${SECRET_NAME}"
           else
             echo "Secret ${SECRET_NAME} not found, skipping deletion"
           fi
         env:
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
 
-      # 3. Neonブランチを削除
       - name: Delete Neon Branch
-        if: github.event.action == 'closed'
         uses: neondatabase/delete-branch-action@v3
         with:
           project_id: ${{ vars.NEON_PROJECT_ID }}
           branch: pr-${{ github.event.pull_request.number }}
           api_key: ${{ secrets.NEON_API_KEY }}
 
-      # PRクローズ時のコメント
       - name: Comment PR on Cleanup
-        if: github.event.action == 'closed'
         uses: actions/github-script@v7
         with:
           script: |
