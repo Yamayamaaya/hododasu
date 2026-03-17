@@ -89,7 +89,7 @@ jobs:
       pull-requests: write
       checks: write
     outputs:
-      preview_url: ${{ steps.firebase-deploy.outputs.details_url }}
+      preview_url: ${{ steps.firebase-deploy.outputs.urls }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
