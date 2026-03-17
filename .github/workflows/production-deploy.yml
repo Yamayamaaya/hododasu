@@ -34,9 +34,11 @@ jobs:
 
           # Cloud Buildを実行（完了を待つ）
           # マイグレーションとAPIデプロイは並列実行される
+          COMMIT_SHA="${{ github.sha }}"
+
           gcloud builds submit \
             --config=cloudbuild.yaml \
-            --substitutions=_REGION=asia-northeast1,_SERVICE_NAME=hododasu-api
+            --substitutions=_REGION=asia-northeast1,_SERVICE_NAME=hododasu-api,_BRANCH_NAME=main,COMMIT_SHA=${COMMIT_SHA}
 
           echo "✅ Cloud Build completed for production deployment"
         env:

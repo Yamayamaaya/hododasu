@@ -211,7 +211,8 @@ steps:
       - |
         set -e
 
-        if [ "$BRANCH_NAME" != "main" ]; then
+        EFFECTIVE_BRANCH="${BRANCH_NAME:-$_BRANCH_NAME}"
+        if [ "$EFFECTIVE_BRANCH" != "main" ]; then
           echo "Not main branch, skipping prod DB URL fetch"
           exit 0
         fi
@@ -231,6 +232,7 @@ steps:
     waitFor: ['push-docker-image']
     env:
       - 'BRANCH_NAME=$BRANCH_NAME'
+      - '_BRANCH_NAME=$_BRANCH_NAME'
 
   # 本番DBマイグレーション（mainブランチ時のみ）
   # APIデプロイと並列実行（互換性の問題はリリース時に限り許容）
@@ -241,7 +243,8 @@ steps:
       - |
         set -e
 
-        if [ "$BRANCH_NAME" != "main" ]; then
+        EFFECTIVE_BRANCH="${BRANCH_NAME:-$_BRANCH_NAME}"
+        if [ "$EFFECTIVE_BRANCH" != "main" ]; then
           echo "Not main branch, skipping production migration"
           exit 0
         fi
@@ -269,6 +272,7 @@ steps:
     waitFor: ['fetch-prod-db-urls']
     env:
       - 'BRANCH_NAME=$BRANCH_NAME'
+      - '_BRANCH_NAME=$_BRANCH_NAME'
 
   # Cloud Run本番デプロイ（mainブランチ時のみ）
   # マイグレーションと並列実行（互換性の問題はリリース時に限り許容）
@@ -279,7 +283,8 @@ steps:
       - |
         set -e
 
-        if [ "$BRANCH_NAME" != "main" ]; then
+        EFFECTIVE_BRANCH="${BRANCH_NAME:-$_BRANCH_NAME}"
+        if [ "$EFFECTIVE_BRANCH" != "main" ]; then
           echo "Not main branch, skipping Cloud Run production deploy"
           exit 0
         fi
@@ -308,6 +313,7 @@ steps:
     waitFor: ['push-docker-image']
     env:
       - 'BRANCH_NAME=$BRANCH_NAME'
+      - '_BRANCH_NAME=$_BRANCH_NAME'
       - '_REGION=$_REGION'
       - '_SERVICE_NAME=$_SERVICE_NAME'
 
@@ -321,6 +327,7 @@ options:
 
 # 置換変数（Cloud Buildトリガーで設定）
 substitutions:
-  _REGION: 'asia-northeast1' # Cloud Runリージョン
+  _REGION: 'asia-northeast1'    # Cloud Runリージョン
   _SERVICE_NAME: 'hododasu-api' # Cloud Runサービス名
-  _PR_NUMBER: '' # PR番号（PR時のみ設定、GitHub Actionsから取得）
+  _PR_NUMBER: ''                # PR番号（PR時のみ設定）
+  _BRANCH_NAME: ''              # 本番デプロイ時に"main"を設定

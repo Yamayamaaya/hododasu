@@ -21,7 +21,7 @@ jobs:
 
       # 1. Neonブランチを作成
       - name: Create Neon Branch
-        if: github.event.action != 'closed'
+        if: github.event.action == 'opened' || github.event.action == 'reopened'
         uses: neondatabase/create-branch-action@v6
         id: create-branch
         with:
@@ -43,7 +43,7 @@ jobs:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
       - name: Save Database URL to Secret Manager
-        if: github.event.action != 'closed'
+        if: github.event.action == 'opened' || github.event.action == 'reopened'
         run: |
           PR_NUMBER=${{ github.event.pull_request.number }}
           DB_URL="${{ steps.create-branch.outputs.db_url }}"
