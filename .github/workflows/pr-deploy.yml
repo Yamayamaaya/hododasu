@@ -9,8 +9,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    outputs:
-      db_url: ${{ steps.create-branch.outputs.db_url }}
     steps:
       - name: Create Neon Branch
         if: github.event.action == 'opened' || github.event.action == 'reopened'

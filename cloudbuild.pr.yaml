@@ -28,55 +28,6 @@ steps:
     id: 'build'
     waitFor: ['install-deps']
 
-  # node:20にはgcloudがないためcloud-sdkイメージで取得し/workspaceに書き出す
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        set -e
-        PR_NUMBER="$_PR_NUMBER"
-
-        STAGING_DB_URL=$$(gcloud secrets versions access latest --secret="NEON_STAGING_DB_PR_$${PR_NUMBER}")
-
-        if [ -z "$$STAGING_DB_URL" ]; then
-          echo "❌ Error: Staging database URL not found in Secret Manager for PR $${PR_NUMBER}"
-          exit 1
-        fi
-
-        echo -n "$$STAGING_DB_URL" > /workspace/staging_db_url
-    id: 'fetch-staging-db-url'
-    waitFor: ['build']
-    env:
-      - '_PR_NUMBER=$_PR_NUMBER'
-
-  - name: 'node:20'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        set -e
-
-        if [ ! -f /workspace/staging_db_url ]; then
-          echo "❌ Error: /workspace/staging_db_url not found"
-          exit 1
-        fi
-        STAGING_DB_URL=$$(cat /workspace/staging_db_url)
-
-        if [ -z "$$STAGING_DB_URL" ]; then
-          echo "❌ Error: Staging database URL is empty"
-          exit 1
-        fi
-
-        export DATABASE_URL_DIRECT="$${STAGING_DB_URL}"
-        export DATABASE_URL_POOLED="$${STAGING_DB_URL}"
-        export PATH="/workspace/bin:$$PATH"
-
-        cd /workspace
-        pnpm --filter api db:migrate
-    id: 'migrate-staging-db'
-    waitFor: ['fetch-staging-db-url']
-
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'build'
@@ -109,7 +60,7 @@ steps:
         PR_NUMBER="$_PR_NUMBER"
         SERVICE_NAME="hododasu-api-preview-$${PR_NUMBER}"
 
-        STAGING_DB_URL=$$(gcloud secrets versions access latest --secret="NEON_STAGING_DB_PR_$${PR_NUMBER}" 2>/dev/null || echo "")
+        STAGING_DB_URL=$$(gcloud secrets versions access latest --secret="NEON_STAGING_DB_PR_$${PR_NUMBER}")
 
         if [ -z "$$STAGING_DB_URL" ]; then
           echo "Error: Staging database URL not found for PR $${PR_NUMBER}"

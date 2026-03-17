@@ -6,6 +6,9 @@ import { serve } from '@hono/node-server';
 import { swaggerUI } from '@hono/swagger-ui';
 import { cors } from 'hono/cors';
 import sessionsRouter from './routes/sessions';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import { migrate } from 'drizzle-orm/postgres-js/migrator';
+import { getDirectClient } from './db';
 
 const baseApp = new OpenAPIHono();
 
@@ -53,6 +56,10 @@ app.doc('/doc', {
 
 // Swagger UIエンドポイント
 app.get('/swagger', swaggerUI({ url: '/doc' }));
+
+const directClient = getDirectClient();
+await migrate(drizzle(directClient), { migrationsFolder: './drizzle' });
+await directClient.end();
 
 const port = env.PORT;
 
