@@ -190,7 +190,7 @@ sessionsRouter.openapi(getSessionRoute, async (c) => {
         name: p.name,
         weight: p.weight,
       })),
-      session.roundingMethod as 'round_up' | 'round_down' | null,
+      session.roundingMethod as 'round_up' | 'round_down' | 'round_half_up',
       session.roundingUnit
     );
 
@@ -229,12 +229,13 @@ sessionsRouter.openapi(getSessionRoute, async (c) => {
       participants: participantsWithOrganizer,
       createdAt: session.createdAt.toISOString(),
       updatedAt: session.updatedAt.toISOString(),
-    });
+    }, 200 as const);
   } catch (error) {
     console.error('Error fetching session:', error);
     return c.json({ error: 'Failed to fetch session' }, 500);
   }
-});
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+}) as any;
 
 // PATCH /api/sessions/:editId
 const updateSessionRoute = createRoute({
@@ -305,8 +306,8 @@ sessionsRouter.openapi(updateSessionRoute, async (c) => {
         totalAmount?: number;
         messageTemplate?: string | null;
         attachDetailsLink?: boolean;
-        roundingMethod?: string | null;
-        roundingUnit?: number | null;
+        roundingMethod?: string;
+        roundingUnit?: number;
         updatedAt?: Date;
       } = {
         updatedAt: new Date(),
@@ -319,9 +320,9 @@ sessionsRouter.openapi(updateSessionRoute, async (c) => {
       if (data.attachDetailsLink !== undefined)
         updateData.attachDetailsLink = data.attachDetailsLink;
       if (data.roundingMethod !== undefined)
-        updateData.roundingMethod = data.roundingMethod || null;
+        updateData.roundingMethod = data.roundingMethod || 'round_half_up';
       if (data.roundingUnit !== undefined)
-        updateData.roundingUnit = data.roundingUnit || null;
+        updateData.roundingUnit = data.roundingUnit ?? 0.1;
 
       await db.update(sessions).set(updateData).where(eq(sessions.id, session.id));
 
@@ -431,17 +432,17 @@ sessionsRouter.openapi(updateSessionRoute, async (c) => {
         attachDetailsLink: updatedSession.attachDetailsLink,
         roundingMethod: updatedSession.roundingMethod as 'round_up' | 'round_down' | 'round_half_up',
         roundingUnit: updatedSession.roundingUnit,
-        organizerName: updatedSession.organizerName,
         participants: participantsWithOrganizer,
         createdAt: updatedSession.createdAt.toISOString(),
         updatedAt: updatedSession.updatedAt.toISOString(),
-      });
+      }, 200 as const);
     } catch (error) {
       console.error('Error updating session:', error);
       return c.json({ error: 'Failed to update session' }, 500);
     }
   }
-);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+) as any;
 
 // GET /api/sessions/result/:resultId
 const getSessionByResultIdRoute = createRoute({
@@ -509,7 +510,7 @@ sessionsRouter.openapi(getSessionByResultIdRoute, async (c) => {
         name: p.name,
         weight: p.weight,
       })),
-      session.roundingMethod as 'round_up' | 'round_down' | null,
+      session.roundingMethod as 'round_up' | 'round_down' | 'round_half_up',
       session.roundingUnit
     );
 
@@ -548,12 +549,13 @@ sessionsRouter.openapi(getSessionByResultIdRoute, async (c) => {
       participants: participantsWithOrganizer,
       createdAt: session.createdAt.toISOString(),
       updatedAt: session.updatedAt.toISOString(),
-    });
+    }, 200 as const);
   } catch (error) {
     console.error('Error fetching session:', error);
     return c.json({ error: 'Failed to fetch session' }, 500);
   }
-});
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+}) as any;
 
 // DELETE /api/sessions/:editId
 const deleteSessionRoute = createRoute({

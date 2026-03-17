@@ -1,0 +1,191 @@
+name: PR Deploy
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Create Neon Branch
+        if: github.event.action == 'opened' || github.event.action == 'reopened'
+        uses: neondatabase/create-branch-action@v6
+        id: create-branch
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          branch_name: pr-${{ github.event.pull_request.number }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+
+      - name: Authenticate to Google Cloud
+        if: github.event.action == 'opened' || github.event.action == 'reopened'
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup GCloud
+        if: github.event.action == 'opened' || github.event.action == 'reopened'
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Save Database URL to Secret Manager
+        if: github.event.action == 'opened' || github.event.action == 'reopened'
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          DB_URL="${{ steps.create-branch.outputs.db_url }}"
+          SECRET_NAME="NEON_STAGING_DB_PR_${PR_NUMBER}"
+          GCP_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
+
+          gcloud config set project "${GCP_PROJECT_ID}"
+
+          if gcloud secrets describe "${SECRET_NAME}" --project="${GCP_PROJECT_ID}" >/dev/null 2>&1; then
+            echo -n "${DB_URL}" | gcloud secrets versions add "${SECRET_NAME}" --data-file=- --project="${GCP_PROJECT_ID}"
+          else
+            echo -n "${DB_URL}" | gcloud secrets create "${SECRET_NAME}" --data-file=- --project="${GCP_PROJECT_ID}"
+          fi
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+
+  deploy-api:
+    needs: [setup]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup GCloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Deploy API to Cloud Run (Preview)
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          COMMIT_SHA="${{ github.event.pull_request.head.sha }}"
+          GCP_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
+
+          gcloud config set project "${GCP_PROJECT_ID}"
+
+          gcloud builds submit \
+            --config=cloudbuild.pr.yaml \
+            --substitutions=_REGION=asia-northeast1,_PR_NUMBER=${PR_NUMBER},COMMIT_SHA=${COMMIT_SHA}
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+    outputs:
+      preview_url: ${{ steps.firebase-deploy.outputs.details_url }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8.15.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build web app
+        run: pnpm --filter web build
+
+      - name: Update firebase.json for preview environment
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          PREVIEW_SERVICE_NAME="hododasu-api-preview-${PR_NUMBER}"
+
+          cp firebase.json firebase.json.backup
+
+          cat > firebase.json << EOF
+          {
+            "hosting": {
+              "public": "apps/web/dist",
+              "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+              "rewrites": [
+                {
+                  "source": "/api/**",
+                  "run": {
+                    "serviceId": "${PREVIEW_SERVICE_NAME}",
+                    "region": "asia-northeast1"
+                  }
+                },
+                {
+                  "source": "**",
+                  "destination": "/index.html"
+                }
+              ]
+            }
+          }
+          EOF
+
+      - name: Deploy to Firebase Hosting (preview)
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        id: firebase-deploy
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
+          projectId: '${{ vars.FIREBASE_PROJECT_ID }}'
+          channelId: 'pr-${{ github.event.pull_request.number }}'
+
+      - name: Restore original firebase.json
+        if: always()
+        run: mv firebase.json.backup firebase.json || true
+
+  comment-pr:
+    needs: [setup, deploy-api, deploy-frontend]
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Comment PR with Preview URLs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const marker = '<!-- pr-preview-comment -->';
+            const previewUrl = '${{ needs.deploy-frontend.outputs.preview_url }}';
+            const body = `${marker}\n✅ Preview environment deployed\n\n🔗 ${previewUrl}`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+
+            const existing = comments.find(c => c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                comment_id: existing.id,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body,
+              });
+            }
+
