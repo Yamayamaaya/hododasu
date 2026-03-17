@@ -42,37 +42,34 @@ steps:
   # 注意: NeonブランチはGitHub Actionsで作成されます
   # ============================================
 
-  # ステージングDBマイグレーション（PR時のみ）
-  # GitHub Actionsで作成されたNeonブランチの接続URLを使用
-  - name: 'node:20'
+  # ステージングDB URLをSecret Managerから取得してファイルに保存（PR時のみ）
+  # node:20イメージにはgcloudがないため、cloud-sdkイメージで取得する
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'bash'
     args:
       - '-c'
       - |
         set -e
 
-        # PR番号を取得（GitHub Actionsから必須で渡される）
         if [ -z "$_PR_NUMBER" ]; then
-          echo "Error: _PR_NUMBER is required for PR builds"
-          exit 1
+          echo "Not a PR build, skipping staging DB URL fetch"
+          exit 0
         fi
         PR_NUMBER="$_PR_NUMBER"
 
-        # Secret ManagerからステージングDB接続URLを取得
-        # 形式: NEON_STAGING_DB_PR_{PR_NUMBER}
-        # GitHub Actionsで作成されるまで最大30秒待機（リトライ）
+        # Secret Managerからステージング DB URLを取得
         MAX_RETRIES=30
         RETRY_COUNT=0
         STAGING_DB_URL=""
 
         while [ $$RETRY_COUNT -lt $$MAX_RETRIES ]; do
           STAGING_DB_URL=$$(gcloud secrets versions access latest --secret="NEON_STAGING_DB_PR_$${PR_NUMBER}" 2>/dev/null || echo "")
-          
+
           if [ -n "$$STAGING_DB_URL" ]; then
             echo "✅ Staging database URL found after $${RETRY_COUNT} retries"
             break
           fi
-          
+
           RETRY_COUNT=$$((RETRY_COUNT + 1))
           if [ $$RETRY_COUNT -lt $$MAX_RETRIES ]; then
             echo "Waiting for Secret Manager entry... ($${RETRY_COUNT}/$${MAX_RETRIES})"
@@ -82,7 +79,40 @@ steps:
 
         if [ -z "$$STAGING_DB_URL" ]; then
           echo "❌ Error: Staging database URL not found in Secret Manager for PR $${PR_NUMBER}"
-          echo "GitHub Actions may not have completed yet. Please check the GitHub Actions workflow."
+          echo "GitHub Actions may not have completed yet."
+          exit 1
+        fi
+
+        echo -n "$$STAGING_DB_URL" > /workspace/staging_db_url
+        echo "✅ Staging DB URL written to /workspace/staging_db_url"
+    id: 'fetch-staging-db-url'
+    waitFor: ['build']
+    env:
+      - '_PR_NUMBER=$_PR_NUMBER'
+
+  # ステージングDBマイグレーション（PR時のみ）
+  - name: 'node:20'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -e
+
+        if [ -z "$_PR_NUMBER" ]; then
+          echo "Not a PR build, skipping staging DB migration"
+          exit 0
+        fi
+        PR_NUMBER="$_PR_NUMBER"
+
+        # /workspace/staging_db_urlからDB URLを読み込む
+        if [ ! -f /workspace/staging_db_url ]; then
+          echo "❌ Error: /workspace/staging_db_url not found"
+          exit 1
+        fi
+        STAGING_DB_URL=$$(cat /workspace/staging_db_url)
+
+        if [ -z "$$STAGING_DB_URL" ]; then
+          echo "❌ Error: Staging database URL is empty"
           exit 1
         fi
 
@@ -94,7 +124,7 @@ steps:
         cd /workspace
         pnpm --filter api db:migrate
     id: 'migrate-staging-db'
-    waitFor: ['build']
+    waitFor: ['fetch-staging-db-url']
     env:
       - 'BRANCH_NAME=$BRANCH_NAME'
       - '_PR_NUMBER=$_PR_NUMBER'
@@ -172,6 +202,36 @@ steps:
   # mainブランチpush時: 本番デプロイ
   # ============================================
 
+  # 本番DB URLをSecret Managerから取得してファイルに保存（mainブランチ時のみ）
+  # node:20イメージにはgcloudがないため、cloud-sdkイメージで取得する
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -e
+
+        if [ "$BRANCH_NAME" != "main" ]; then
+          echo "Not main branch, skipping prod DB URL fetch"
+          exit 0
+        fi
+
+        PROD_DB_URL_DIRECT=$$(gcloud secrets versions access latest --secret="NEON_PROD_DATABASE_URL_DIRECT")
+        PROD_DB_URL_POOLED=$$(gcloud secrets versions access latest --secret="NEON_PROD_DATABASE_URL_POOLED")
+
+        if [ -z "$$PROD_DB_URL_DIRECT" ] || [ -z "$$PROD_DB_URL_POOLED" ]; then
+          echo "Error: Production database URLs not found in Secret Manager"
+          exit 1
+        fi
+
+        echo -n "$$PROD_DB_URL_DIRECT" > /workspace/prod_db_url_direct
+        echo -n "$$PROD_DB_URL_POOLED" > /workspace/prod_db_url_pooled
+        echo "✅ Prod DB URLs written to /workspace"
+    id: 'fetch-prod-db-urls'
+    waitFor: ['push-docker-image']
+    env:
+      - 'BRANCH_NAME=$BRANCH_NAME'
+
   # 本番DBマイグレーション（mainブランチ時のみ）
   # APIデプロイと並列実行（互換性の問題はリリース時に限り許容）
   - name: 'node:20'
@@ -186,11 +246,15 @@ steps:
           exit 0
         fi
 
-        # Secret Managerから本番DB接続URLを取得
-        PROD_DB_URL_DIRECT=$$(gcloud secrets versions access latest --secret="NEON_PROD_DATABASE_URL_DIRECT")
+        # /workspace/prod_db_url_directからDB URLを読み込む
+        if [ ! -f /workspace/prod_db_url_direct ]; then
+          echo "Error: /workspace/prod_db_url_direct not found"
+          exit 1
+        fi
+        PROD_DB_URL_DIRECT=$$(cat /workspace/prod_db_url_direct)
 
         if [ -z "$$PROD_DB_URL_DIRECT" ]; then
-          echo "Error: Production database URL not found in Secret Manager"
+          echo "Error: Production database URL is empty"
           exit 1
         fi
 
@@ -202,7 +266,7 @@ steps:
         cd /workspace
         pnpm --filter api db:migrate
     id: 'migrate-prod-db'
-    waitFor: ['push-docker-image']
+    waitFor: ['fetch-prod-db-urls']
     env:
       - 'BRANCH_NAME=$BRANCH_NAME'
 
