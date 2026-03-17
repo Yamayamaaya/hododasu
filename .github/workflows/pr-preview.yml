@@ -85,7 +85,7 @@ jobs:
           # Cloud Buildを実行（完了を待つ）
           gcloud builds submit \
             --config=cloudbuild.yaml \
-            --substitutions=_REGION=asia-northeast1,_PR_NUMBER=${PR_NUMBER}
+            --substitutions=_REGION=asia-northeast1,_PR_NUMBER=${PR_NUMBER},COMMIT_SHA=${COMMIT_SHA}
 
           echo "✅ Cloud Build completed for PR ${PR_NUMBER}"
         env:
