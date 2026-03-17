@@ -78,9 +78,6 @@ steps:
           --min-instances 0
     id: 'deploy-cloud-run-prod'
     waitFor: ['push-docker-image']
-    env:
-      - '_REGION=$_REGION'
-      - '_SERVICE_NAME=$_SERVICE_NAME'
 
 timeout: '3600s'
 
