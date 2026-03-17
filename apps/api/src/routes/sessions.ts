@@ -234,6 +234,7 @@ sessionsRouter.openapi(getSessionRoute, async (c) => {
     console.error('Error fetching session:', error);
     return c.json({ error: 'Failed to fetch session' }, 500);
   }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 }) as any;
 
 // PATCH /api/sessions/:editId
@@ -440,6 +441,7 @@ sessionsRouter.openapi(updateSessionRoute, async (c) => {
       return c.json({ error: 'Failed to update session' }, 500);
     }
   }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 ) as any;
 
 // GET /api/sessions/result/:resultId
@@ -552,6 +554,7 @@ sessionsRouter.openapi(getSessionByResultIdRoute, async (c) => {
     console.error('Error fetching session:', error);
     return c.json({ error: 'Failed to fetch session' }, 500);
   }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 }) as any;
 
 // DELETE /api/sessions/:editId
