@@ -88,6 +88,8 @@ jobs:
       contents: read
       pull-requests: write
       checks: write
+    outputs:
+      preview_url: ${{ steps.firebase-deploy.outputs.details_url }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -139,6 +141,7 @@ jobs:
 
       - name: Deploy to Firebase Hosting (preview)
         uses: FirebaseExtended/action-hosting-deploy@v0
+        id: firebase-deploy
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
@@ -160,13 +163,8 @@ jobs:
         with:
           script: |
             const prNumber = ${{ github.event.pull_request.number }};
-            const comment = `✅ Preview environment deployed for PR #${prNumber}
-
-            **API**: \`hododasu-api-preview-${prNumber}\` deployed to Cloud Run
-
-            **Frontend**: Firebase Hosting preview channel \`pr-${prNumber}\` deployed
-
-            Preview URLs will be available in the Firebase Hosting deployment status.`;
+            const previewUrl = '${{ needs.deploy-frontend.outputs.preview_url }}';
+            const comment = `✅ Preview environment deployed for PR #${prNumber}\n\n🔗 ${previewUrl}`;
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,
