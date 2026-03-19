@@ -4,6 +4,10 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   setup:
     runs-on: ubuntu-latest
@@ -135,7 +139,7 @@ jobs:
             --project "${GCP_PROJECT_ID}" \
             --platform managed \
             --allow-unauthenticated \
-            --set-env-vars "DATABASE_URL_POOLED=${STAGING_DB_URL},DATABASE_URL_DIRECT=${STAGING_DB_URL}" \
+            --set-env-vars "^::^DATABASE_URL_POOLED=${STAGING_DB_URL}::DATABASE_URL_DIRECT=${STAGING_DB_URL}" \
             --memory 512Mi \
             --cpu 1 \
             --max-instances 10 \
