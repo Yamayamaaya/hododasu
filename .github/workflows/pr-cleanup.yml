@@ -36,19 +36,22 @@ jobs:
             echo "Cloud Run preview service ${SERVICE_NAME} not found, skipping deletion"
           fi
 
-      - name: Delete Secret from Secret Manager
+      - name: Delete Secrets from Secret Manager
         run: |
           PR_NUMBER=${{ github.event.pull_request.number }}
-          SECRET_NAME="NEON_STAGING_DB_PR_${PR_NUMBER}"
           GCP_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
 
-          if gcloud secrets describe "${SECRET_NAME}" --project="${GCP_PROJECT_ID}" >/dev/null 2>&1; then
-            gcloud secrets delete "${SECRET_NAME}" --project="${GCP_PROJECT_ID}" --quiet
-          else
-            echo "Secret ${SECRET_NAME} not found, skipping deletion"
-          fi
+          for SUFFIX in POOLED DIRECT; do
+            SECRET_NAME="NEON_STAGING_DB_PR_${PR_NUMBER}_${SUFFIX}"
+            if gcloud secrets describe "${SECRET_NAME}" --project="${GCP_PROJECT_ID}" >/dev/null 2>&1; then
+              gcloud secrets delete "${SECRET_NAME}" --project="${GCP_PROJECT_ID}" --quiet
+            else
+              echo "Secret ${SECRET_NAME} not found, skipping deletion"
+            fi
+          done
 
       - name: Delete Neon Branch
+        continue-on-error: true
         uses: neondatabase/delete-branch-action@v3
         with:
           project_id: ${{ vars.NEON_PROJECT_ID }}
