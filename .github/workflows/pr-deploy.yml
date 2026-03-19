@@ -193,7 +193,9 @@ jobs:
           script: |
             const marker = '<!-- pr-preview-comment -->';
             const previewUrl = '${{ needs.deploy.outputs.preview_url }}';
-            const body = `${marker}\n✅ Preview environment deployed\n\n🔗 ${previewUrl}`;
+            const sha = '${{ github.event.pull_request.head.sha }}'.substring(0, 7);
+            const now = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+            const body = `${marker}\n✅ Preview environment deployed\n\n🔗 ${previewUrl}\n\n\`${sha}\` — ${now}`;
 
             const { data: comments } = await github.rest.issues.listComments({
               issue_number: context.issue.number,
