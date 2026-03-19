@@ -39,7 +39,7 @@ jobs:
         if: github.event.action == 'opened' || github.event.action == 'reopened'
         run: |
           PR_NUMBER=${{ github.event.pull_request.number }}
-          DB_URL_POOLED="${{ steps.create-branch.outputs.db_url_with_pooler }}"
+          DB_URL_POOLED="${{ steps.create-branch.outputs.db_url_pooled }}"
           DB_URL_DIRECT="${{ steps.create-branch.outputs.db_url }}"
           GCP_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
 
