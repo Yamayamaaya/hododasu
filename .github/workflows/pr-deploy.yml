@@ -49,15 +49,10 @@ jobs:
             echo -n "${DB_URL}" | gcloud secrets create "${SECRET_NAME}" --data-file=- --project="${GCP_PROJECT_ID}"
           fi
 
-  check-and-deploy:
-    needs: [setup]
+  check:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: write
-      checks: write
-    outputs:
-      preview_url: ${{ steps.firebase-deploy.outputs.details_url }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -96,6 +91,45 @@ jobs:
 
       - name: Format check
         run: pnpm format:check
+
+  deploy:
+    needs: [setup, check]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+    outputs:
+      preview_url: ${{ steps.firebase-deploy.outputs.details_url }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8.15.0
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Build
         run: pnpm build
@@ -185,7 +219,7 @@ jobs:
           channelId: 'pr-${{ github.event.pull_request.number }}'
 
   comment-pr:
-    needs: [check-and-deploy]
+    needs: [deploy]
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -195,7 +229,7 @@ jobs:
         with:
           script: |
             const marker = '<!-- pr-preview-comment -->';
-            const previewUrl = '${{ needs.check-and-deploy.outputs.preview_url }}';
+            const previewUrl = '${{ needs.deploy.outputs.preview_url }}';
             const sha = '${{ github.event.pull_request.head.sha }}'.substring(0, 7);
             const now = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
             const body = `${marker}\n✅ Preview environment deployed\n\n🔗 ${previewUrl}\n\n\`${sha}\` — ${now}`;
