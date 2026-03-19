@@ -4,6 +4,10 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   setup:
     runs-on: ubuntu-latest
@@ -31,65 +35,29 @@ jobs:
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
-      - name: Save Database URL to Secret Manager
+      - name: Save Database URLs to Secret Manager
         if: github.event.action == 'opened' || github.event.action == 'reopened'
         run: |
           PR_NUMBER=${{ github.event.pull_request.number }}
-          DB_URL="${{ steps.create-branch.outputs.db_url }}"
-          SECRET_NAME="NEON_STAGING_DB_PR_${PR_NUMBER}"
+          DB_URL_POOLED="${{ steps.create-branch.outputs.db_url_pooled }}"
+          DB_URL_DIRECT="${{ steps.create-branch.outputs.db_url }}"
           GCP_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
 
-          gcloud config set project "${GCP_PROJECT_ID}"
+          for SUFFIX in POOLED DIRECT; do
+            SECRET_NAME="NEON_STAGING_DB_PR_${PR_NUMBER}_${SUFFIX}"
+            eval "DB_URL=\${DB_URL_${SUFFIX}}"
 
-          if gcloud secrets describe "${SECRET_NAME}" --project="${GCP_PROJECT_ID}" >/dev/null 2>&1; then
-            echo -n "${DB_URL}" | gcloud secrets versions add "${SECRET_NAME}" --data-file=- --project="${GCP_PROJECT_ID}"
-          else
-            echo -n "${DB_URL}" | gcloud secrets create "${SECRET_NAME}" --data-file=- --project="${GCP_PROJECT_ID}"
-          fi
-        env:
-          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+            if gcloud secrets describe "${SECRET_NAME}" --project="${GCP_PROJECT_ID}" >/dev/null 2>&1; then
+              echo -n "${DB_URL}" | gcloud secrets versions add "${SECRET_NAME}" --data-file=- --project="${GCP_PROJECT_ID}"
+            else
+              echo -n "${DB_URL}" | gcloud secrets create "${SECRET_NAME}" --data-file=- --project="${GCP_PROJECT_ID}"
+            fi
+          done
 
-  deploy-api:
-    needs: [setup]
+  check:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-
-      - name: Setup GCloud
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-
-      - name: Deploy API to Cloud Run (Preview)
-        run: |
-          PR_NUMBER=${{ github.event.pull_request.number }}
-          COMMIT_SHA="${{ github.event.pull_request.head.sha }}"
-          GCP_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
-
-          gcloud config set project "${GCP_PROJECT_ID}"
-
-          gcloud builds submit \
-            --config=cloudbuild.pr.yaml \
-            --substitutions=_REGION=asia-northeast1,_PR_NUMBER=${PR_NUMBER},COMMIT_SHA=${COMMIT_SHA}
-        env:
-          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-
-  deploy-frontend:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-      checks: write
-    outputs:
-      preview_url: ${{ steps.firebase-deploy.outputs.details_url }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -104,18 +72,126 @@ jobs:
         with:
           version: 8.15.0
 
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build web app
-        run: pnpm --filter web build
+      - name: Lint
+        run: pnpm lint
+
+      - name: Type check
+        run: pnpm type-check
+
+      - name: Format check
+        run: pnpm format:check
+
+  deploy:
+    needs: [setup, check]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8.15.0
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup GCloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Configure Docker for GCR
+        run: gcloud auth configure-docker
+
+      - name: Build and push Docker image
+        run: |
+          COMMIT_SHA="${{ github.event.pull_request.head.sha }}"
+          GCP_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
+
+          docker build \
+            -t "gcr.io/${GCP_PROJECT_ID}/hododasu-api:${COMMIT_SHA}" \
+            -f Dockerfile.api.prod \
+            .
+
+          docker push "gcr.io/${GCP_PROJECT_ID}/hododasu-api:${COMMIT_SHA}"
+
+      - name: Deploy API to Cloud Run (preview)
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          COMMIT_SHA="${{ github.event.pull_request.head.sha }}"
+          GCP_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
+          SERVICE_NAME="hododasu-api-preview-${PR_NUMBER}"
+
+          STAGING_DB_URL_POOLED=$(gcloud secrets versions access latest \
+            --secret="NEON_STAGING_DB_PR_${PR_NUMBER}_POOLED" \
+            --project="${GCP_PROJECT_ID}")
+
+          STAGING_DB_URL_DIRECT=$(gcloud secrets versions access latest \
+            --secret="NEON_STAGING_DB_PR_${PR_NUMBER}_DIRECT" \
+            --project="${GCP_PROJECT_ID}")
+
+          gcloud run deploy "${SERVICE_NAME}" \
+            --image "gcr.io/${GCP_PROJECT_ID}/hododasu-api:${COMMIT_SHA}" \
+            --region asia-northeast1 \
+            --project "${GCP_PROJECT_ID}" \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars "^::^DATABASE_URL_POOLED=${STAGING_DB_URL_POOLED}::DATABASE_URL_DIRECT=${STAGING_DB_URL_DIRECT}" \
+            --memory 512Mi \
+            --cpu 1 \
+            --max-instances 10 \
+            --min-instances 0
 
       - name: Update firebase.json for preview environment
         run: |
           PR_NUMBER=${{ github.event.pull_request.number }}
           PREVIEW_SERVICE_NAME="hododasu-api-preview-${PR_NUMBER}"
-
-          cp firebase.json firebase.json.backup
 
           cat > firebase.json << EOF
           {
@@ -143,28 +219,19 @@ jobs:
         uses: FirebaseExtended/action-hosting-deploy@v0
         id: firebase-deploy
         with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
           projectId: '${{ vars.FIREBASE_PROJECT_ID }}'
           channelId: 'pr-${{ github.event.pull_request.number }}'
 
-      - name: Restore original firebase.json
-        if: always()
-        run: mv firebase.json.backup firebase.json || true
-
-  comment-pr:
-    needs: [setup, deploy-api, deploy-frontend]
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-    steps:
-      - name: Comment PR with Preview URLs
+      - name: Comment PR with preview URL
         uses: actions/github-script@v7
         with:
           script: |
             const marker = '<!-- pr-preview-comment -->';
-            const previewUrl = '${{ needs.deploy-frontend.outputs.preview_url }}';
-            const body = `${marker}\n✅ Preview environment deployed\n\n🔗 ${previewUrl}`;
+            const previewUrl = '${{ steps.firebase-deploy.outputs.details_url }}';
+            const sha = '${{ github.event.pull_request.head.sha }}'.substring(0, 7);
+            const now = new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) + ' JST';
+            const body = `${marker}\n✅ Preview environment deployed\n\n🔗 ${previewUrl}\n\n\`${sha}\` — ${now}`;
 
             const { data: comments } = await github.rest.issues.listComments({
               issue_number: context.issue.number,
@@ -188,4 +255,3 @@ jobs:
                 body,
               });
             }
-

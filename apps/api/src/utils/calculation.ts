@@ -68,7 +68,7 @@ export function calculateShareAmounts(
   // 端数処理を実行（デフォルト: 四捨五入、0.1の位）
   const method = roundingMethod || 'round_half_up';
   const unit = roundingUnit || 0.1;
-  
+
   if (unit > 0) {
     // 各参加者の負担額を指定の位で切り上げ/切り下げ/四捨五入
     baseAmounts.forEach((p) => {
@@ -119,4 +119,3 @@ export function calculateShareAmounts(
 
   return result;
 }
-

@@ -22,6 +22,3 @@ if (!env.DATABASE_URL_POOLED) {
 if (!env.DATABASE_URL_DIRECT) {
   throw new Error('DATABASE_URL_DIRECT environment variable is required');
 }
-
-
-

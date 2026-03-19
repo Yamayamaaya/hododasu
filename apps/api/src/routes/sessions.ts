@@ -105,9 +105,7 @@ sessionsRouter.openapi(createSessionRoute, async (c) => {
       // 計算結果を保存（幹事はDBに保存しない）
       for (const calculated of calculatedAmounts) {
         if (calculated.name === '幹事') continue; // 幹事はDBに保存しない
-        const participant = currentParticipants.find(
-          (p) => p.name === calculated.name
-        );
+        const participant = currentParticipants.find((p) => p.name === calculated.name);
         if (participant) {
           await db
             .update(sessionParticipants)
@@ -168,11 +166,7 @@ sessionsRouter.openapi(getSessionRoute, async (c) => {
   const { editId } = c.req.valid('param');
 
   try {
-    const [session] = await db
-      .select()
-      .from(sessions)
-      .where(eq(sessions.editId, editId))
-      .limit(1);
+    const [session] = await db.select().from(sessions).where(eq(sessions.editId, editId)).limit(1);
 
     if (!session) {
       return c.json({ error: 'Session not found' }, 404);
@@ -195,46 +189,51 @@ sessionsRouter.openapi(getSessionRoute, async (c) => {
     );
 
     // 参加者データに計算結果をマージ（幹事も含める）
-    const participantsWithOrganizer = calculatedAmounts.map((calc) => {
-      const participant = participants.find((p) => p.name === calc.name);
-      if (participant) {
-        return {
-          id: participant.id,
-          name: participant.name,
-          weight: participant.weight,
-          shareAmount: calc.shareAmount,
-        };
-      } else if (calc.name === '幹事') {
-        // 幹事はDBに存在しないので、仮のIDを設定
-        return {
-          id: 'organizer',
-          name: '幹事',
-          weight: 0,
-          shareAmount: calc.shareAmount,
-        };
-      }
-      return null;
-    }).filter((p): p is NonNullable<typeof p> => p !== null);
+    const participantsWithOrganizer = calculatedAmounts
+      .map((calc) => {
+        const participant = participants.find((p) => p.name === calc.name);
+        if (participant) {
+          return {
+            id: participant.id,
+            name: participant.name,
+            weight: participant.weight,
+            shareAmount: calc.shareAmount,
+          };
+        } else if (calc.name === '幹事') {
+          // 幹事はDBに存在しないので、仮のIDを設定
+          return {
+            id: 'organizer',
+            name: '幹事',
+            weight: 0,
+            shareAmount: calc.shareAmount,
+          };
+        }
+        return null;
+      })
+      .filter((p): p is NonNullable<typeof p> => p !== null);
 
-    return c.json({
-      id: session.id,
-      editId: session.editId,
-      resultId: session.resultId,
-      title: session.title,
-      totalAmount: session.totalAmount,
-      messageTemplate: session.messageTemplate,
-      attachDetailsLink: session.attachDetailsLink,
-      roundingMethod: session.roundingMethod as 'round_up' | 'round_down' | 'round_half_up',
-      roundingUnit: session.roundingUnit,
-      participants: participantsWithOrganizer,
-      createdAt: session.createdAt.toISOString(),
-      updatedAt: session.updatedAt.toISOString(),
-    }, 200 as const);
+    return c.json(
+      {
+        id: session.id,
+        editId: session.editId,
+        resultId: session.resultId,
+        title: session.title,
+        totalAmount: session.totalAmount,
+        messageTemplate: session.messageTemplate,
+        attachDetailsLink: session.attachDetailsLink,
+        roundingMethod: session.roundingMethod as 'round_up' | 'round_down' | 'round_half_up',
+        roundingUnit: session.roundingUnit,
+        participants: participantsWithOrganizer,
+        createdAt: session.createdAt.toISOString(),
+        updatedAt: session.updatedAt.toISOString(),
+      },
+      200 as const
+    );
   } catch (error) {
     console.error('Error fetching session:', error);
     return c.json({ error: 'Failed to fetch session' }, 500);
   }
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 }) as any;
 
 // PATCH /api/sessions/:editId
@@ -284,9 +283,11 @@ const updateSessionRoute = createRoute({
   },
 });
 
-sessionsRouter.openapi(updateSessionRoute, async (c) => {
-  const { editId } = c.req.valid('param');
-  const data = c.req.valid('json');
+sessionsRouter.openapi(
+  updateSessionRoute,
+  async (c) => {
+    const { editId } = c.req.valid('param');
+    const data = c.req.valid('json');
 
     try {
       // セッションを取得
@@ -321,17 +322,14 @@ sessionsRouter.openapi(updateSessionRoute, async (c) => {
         updateData.attachDetailsLink = data.attachDetailsLink;
       if (data.roundingMethod !== undefined)
         updateData.roundingMethod = data.roundingMethod || 'round_half_up';
-      if (data.roundingUnit !== undefined)
-        updateData.roundingUnit = data.roundingUnit ?? 0.1;
+      if (data.roundingUnit !== undefined) updateData.roundingUnit = data.roundingUnit ?? 0.1;
 
       await db.update(sessions).set(updateData).where(eq(sessions.id, session.id));
 
       // 参加者を更新
       if (data.participants !== undefined) {
         // 既存の参加者を削除
-        await db
-          .delete(sessionParticipants)
-          .where(eq(sessionParticipants.sessionId, session.id));
+        await db.delete(sessionParticipants).where(eq(sessionParticipants.sessionId, session.id));
 
         // 新しい参加者を追加
         if (data.participants.length > 0) {
@@ -372,9 +370,7 @@ sessionsRouter.openapi(updateSessionRoute, async (c) => {
       // 計算結果を保存（幹事はDBに保存しない）
       for (const calculated of calculatedAmounts) {
         if (calculated.name === '幹事') continue; // 幹事はDBに保存しない
-        const participant = currentParticipants.find(
-          (p) => p.name === calculated.name
-        );
+        const participant = currentParticipants.find((p) => p.name === calculated.name);
         if (participant) {
           await db
             .update(sessionParticipants)
@@ -401,47 +397,55 @@ sessionsRouter.openapi(updateSessionRoute, async (c) => {
       );
 
       // 参加者データに計算結果をマージ（幹事も含める）
-      const participantsWithOrganizer = finalCalculatedAmounts.map((calc) => {
-        const participant = finalParticipants.find((p) => p.name === calc.name);
-        if (participant) {
-          return {
-            id: participant.id,
-            name: participant.name,
-            weight: participant.weight,
-            shareAmount: calc.shareAmount,
-          };
-        } else if (calc.name === '幹事') {
-          // 幹事はDBに存在しないので、仮のIDを設定
-          return {
-            id: 'organizer',
-            name: '幹事',
-            weight: 0,
-            shareAmount: calc.shareAmount,
-          };
-        }
-        return null;
-      }).filter((p): p is NonNullable<typeof p> => p !== null);
+      const participantsWithOrganizer = finalCalculatedAmounts
+        .map((calc) => {
+          const participant = finalParticipants.find((p) => p.name === calc.name);
+          if (participant) {
+            return {
+              id: participant.id,
+              name: participant.name,
+              weight: participant.weight,
+              shareAmount: calc.shareAmount,
+            };
+          } else if (calc.name === '幹事') {
+            // 幹事はDBに存在しないので、仮のIDを設定
+            return {
+              id: 'organizer',
+              name: '幹事',
+              weight: 0,
+              shareAmount: calc.shareAmount,
+            };
+          }
+          return null;
+        })
+        .filter((p): p is NonNullable<typeof p> => p !== null);
 
-      return c.json({
-        id: updatedSession.id,
-        editId: updatedSession.editId,
-        resultId: updatedSession.resultId,
-        title: updatedSession.title,
-        totalAmount: updatedSession.totalAmount,
-        messageTemplate: updatedSession.messageTemplate,
-        attachDetailsLink: updatedSession.attachDetailsLink,
-        roundingMethod: updatedSession.roundingMethod as 'round_up' | 'round_down' | 'round_half_up',
-        roundingUnit: updatedSession.roundingUnit,
-        participants: participantsWithOrganizer,
-        createdAt: updatedSession.createdAt.toISOString(),
-        updatedAt: updatedSession.updatedAt.toISOString(),
-      }, 200 as const);
+      return c.json(
+        {
+          id: updatedSession.id,
+          editId: updatedSession.editId,
+          resultId: updatedSession.resultId,
+          title: updatedSession.title,
+          totalAmount: updatedSession.totalAmount,
+          messageTemplate: updatedSession.messageTemplate,
+          attachDetailsLink: updatedSession.attachDetailsLink,
+          roundingMethod: updatedSession.roundingMethod as
+            | 'round_up'
+            | 'round_down'
+            | 'round_half_up',
+          roundingUnit: updatedSession.roundingUnit,
+          participants: participantsWithOrganizer,
+          createdAt: updatedSession.createdAt.toISOString(),
+          updatedAt: updatedSession.updatedAt.toISOString(),
+        },
+        200 as const
+      );
     } catch (error) {
       console.error('Error updating session:', error);
       return c.json({ error: 'Failed to update session' }, 500);
     }
   }
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ) as any;
 
 // GET /api/sessions/result/:resultId
@@ -515,46 +519,51 @@ sessionsRouter.openapi(getSessionByResultIdRoute, async (c) => {
     );
 
     // 参加者データに計算結果をマージ（幹事も含める）
-    const participantsWithOrganizer = calculatedAmounts.map((calc) => {
-      const participant = participants.find((p) => p.name === calc.name);
-      if (participant) {
-        return {
-          id: participant.id,
-          name: participant.name,
-          weight: participant.weight,
-          shareAmount: calc.shareAmount,
-        };
-      } else if (calc.name === '幹事') {
-        // 幹事はDBに存在しないので、仮のIDを設定
-        return {
-          id: 'organizer',
-          name: '幹事',
-          weight: 0,
-          shareAmount: calc.shareAmount,
-        };
-      }
-      return null;
-    }).filter((p): p is NonNullable<typeof p> => p !== null);
+    const participantsWithOrganizer = calculatedAmounts
+      .map((calc) => {
+        const participant = participants.find((p) => p.name === calc.name);
+        if (participant) {
+          return {
+            id: participant.id,
+            name: participant.name,
+            weight: participant.weight,
+            shareAmount: calc.shareAmount,
+          };
+        } else if (calc.name === '幹事') {
+          // 幹事はDBに存在しないので、仮のIDを設定
+          return {
+            id: 'organizer',
+            name: '幹事',
+            weight: 0,
+            shareAmount: calc.shareAmount,
+          };
+        }
+        return null;
+      })
+      .filter((p): p is NonNullable<typeof p> => p !== null);
 
-    return c.json({
-      id: session.id,
-      editId: session.editId,
-      resultId: session.resultId,
-      title: session.title,
-      totalAmount: session.totalAmount,
-      messageTemplate: session.messageTemplate,
-      attachDetailsLink: session.attachDetailsLink,
-      roundingMethod: session.roundingMethod as 'round_up' | 'round_down' | 'round_half_up',
-      roundingUnit: session.roundingUnit,
-      participants: participantsWithOrganizer,
-      createdAt: session.createdAt.toISOString(),
-      updatedAt: session.updatedAt.toISOString(),
-    }, 200 as const);
+    return c.json(
+      {
+        id: session.id,
+        editId: session.editId,
+        resultId: session.resultId,
+        title: session.title,
+        totalAmount: session.totalAmount,
+        messageTemplate: session.messageTemplate,
+        attachDetailsLink: session.attachDetailsLink,
+        roundingMethod: session.roundingMethod as 'round_up' | 'round_down' | 'round_half_up',
+        roundingUnit: session.roundingUnit,
+        participants: participantsWithOrganizer,
+        createdAt: session.createdAt.toISOString(),
+        updatedAt: session.updatedAt.toISOString(),
+      },
+      200 as const
+    );
   } catch (error) {
     console.error('Error fetching session:', error);
     return c.json({ error: 'Failed to fetch session' }, 500);
   }
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 }) as any;
 
 // DELETE /api/sessions/:editId
@@ -601,11 +610,7 @@ sessionsRouter.openapi(deleteSessionRoute, async (c) => {
   const { editId } = c.req.valid('param');
 
   try {
-    const [session] = await db
-      .select()
-      .from(sessions)
-      .where(eq(sessions.editId, editId))
-      .limit(1);
+    const [session] = await db.select().from(sessions).where(eq(sessions.editId, editId)).limit(1);
 
     if (!session) {
       return c.json({ error: 'Session not found' }, 404);
@@ -622,4 +627,3 @@ sessionsRouter.openapi(deleteSessionRoute, async (c) => {
 });
 
 export default sessionsRouter;
-

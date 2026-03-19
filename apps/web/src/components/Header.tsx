@@ -6,11 +6,7 @@ export function Header() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
-            <img 
-              src="/logo.png" 
-              alt="ホドダス" 
-              className="h-8 sm:h-10 object-contain"
-            />
+            <img src="/logo.png" alt="ホドダス" className="h-8 sm:h-10 object-contain" />
           </Link>
           <nav className="flex items-center gap-4 sm:gap-6">
             <Link
@@ -37,4 +33,3 @@ export function Header() {
     </header>
   );
 }
-

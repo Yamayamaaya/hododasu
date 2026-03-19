@@ -66,4 +66,3 @@ export type SessionResponse = z.infer<typeof sessionResponseSchema>;
 export type SessionParticipantResponse = z.infer<typeof sessionParticipantResponseSchema>;
 export type ErrorResponse = z.infer<typeof errorResponseSchema>;
 export type DeleteSessionResponse = z.infer<typeof deleteSessionResponseSchema>;
-

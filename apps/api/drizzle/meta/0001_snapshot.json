@@ -61,12 +61,8 @@
           "name": "session_participants_session_id_sessions_id_fk",
           "tableFrom": "session_participants",
           "tableTo": "sessions",
-          "columnsFrom": [
-            "session_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["session_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -147,16 +143,12 @@
         "sessions_edit_id_unique": {
           "name": "sessions_edit_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "edit_id"
-          ]
+          "columns": ["edit_id"]
         },
         "sessions_result_id_unique": {
           "name": "sessions_result_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "result_id"
-          ]
+          "columns": ["result_id"]
         }
       },
       "policies": {},
