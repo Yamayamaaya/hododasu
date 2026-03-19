@@ -46,4 +46,3 @@ export function generateLineUrl(message: string): string {
   const encoded = encodeURIComponent(message);
   return `https://line.me/R/msg/text/?${encoded}`;
 }
-

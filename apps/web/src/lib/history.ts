@@ -43,15 +43,15 @@ function saveViewHistory(history: ViewHistory[]): void {
  */
 export function addViewHistory(history: ViewHistory): void {
   const currentHistory = getViewHistory();
-  
+
   // 同じページ（type + id）の既存履歴を削除
   const filteredHistory = currentHistory.filter(
     (h) => !(h.type === history.type && h.id === history.id)
   );
-  
+
   // 新しい履歴を先頭に追加
   const newHistory = [history, ...filteredHistory];
-  
+
   saveViewHistory(newHistory);
 }
 
@@ -60,9 +60,7 @@ export function addViewHistory(history: ViewHistory): void {
  */
 export function removeViewHistory(type: HistoryType, id: string): void {
   const currentHistory = getViewHistory();
-  const filteredHistory = currentHistory.filter(
-    (h) => !(h.type === type && h.id === id)
-  );
+  const filteredHistory = currentHistory.filter((h) => !(h.type === type && h.id === id));
   saveViewHistory(filteredHistory);
 }
 
@@ -76,6 +74,3 @@ export function clearViewHistory(): void {
     console.error('Failed to clear view history:', error);
   }
 }
-
-
-

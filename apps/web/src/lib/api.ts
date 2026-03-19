@@ -8,9 +8,7 @@ import {
 // 相対パスでAPIを呼び出す（Viteプロキシ経由）
 const API_BASE_URL = '';
 
-export async function createSession(
-  data: CreateSessionRequest
-): Promise<CreateSessionResponse> {
+export async function createSession(data: CreateSessionRequest): Promise<CreateSessionResponse> {
   const response = await fetch(`${API_BASE_URL}/api/sessions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -61,4 +59,3 @@ export async function deleteSession(editId: string): Promise<void> {
     throw new Error('Failed to delete session');
   }
 }
-

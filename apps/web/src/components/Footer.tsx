@@ -6,11 +6,7 @@ export function Footer() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center">
-            <img 
-              src="/logo.png" 
-              alt="ホドダス" 
-              className="h-6 sm:h-8 object-contain opacity-70"
-            />
+            <img src="/logo.png" alt="ホドダス" className="h-6 sm:h-8 object-contain opacity-70" />
           </div>
           <nav className="flex items-center gap-4 sm:gap-6">
             <Link
@@ -40,4 +36,3 @@ export function Footer() {
     </footer>
   );
 }
-

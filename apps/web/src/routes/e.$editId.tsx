@@ -195,7 +195,9 @@ function EditSessionPage() {
         <Card className="shadow-lg border-0">
           <CardHeader>
             <CardTitle className="text-2xl sm:text-4xl">{session.title}</CardTitle>
-            <CardDescription className="text-sm sm:text-base">セッションの編集と計算結果の確認</CardDescription>
+            <CardDescription className="text-sm sm:text-base">
+              セッションの編集と計算結果の確認
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
@@ -238,55 +240,63 @@ function EditSessionPage() {
                 <div className="space-y-2 sm:space-y-3">
                   {currentData.participants.map((p, index) => (
                     <div key={index} className="bg-muted/30 rounded-lg p-3 sm:p-4">
-                        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                          <div className="flex-1">
-                            <Label htmlFor={`name-${index}`} className="text-xs text-muted-foreground">
-                              名前
-                            </Label>
-                            <Input
-                              id={`name-${index}`}
-                              type="text"
-                              placeholder="名前"
-                              value={p.name}
-                              onChange={(e) => updateParticipant(index, 'name', e.target.value)}
-                              required
-                            />
-                          </div>
-                          <div className="w-full sm:w-24">
-                            <Label
-                              htmlFor={`weight-${index}`}
-                              className="text-xs text-muted-foreground"
-                            >
-                              傾斜
-                            </Label>
-                            <Input
-                              id={`weight-${index}`}
-                              type="number"
-                              min="1"
-                              placeholder="100"
-                              value={p.weight}
-                              onChange={(e) =>
-                                updateParticipant(index, 'weight', parseInt(e.target.value) || 100)
-                              }
-                              required
-                            />
-                          </div>
-                          {currentData.participants.length > 1 && (
-                            <div className="flex items-end">
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                size="icon"
-                                onClick={() => removeParticipant(index)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          )}
+                      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                        <div className="flex-1">
+                          <Label
+                            htmlFor={`name-${index}`}
+                            className="text-xs text-muted-foreground"
+                          >
+                            名前
+                          </Label>
+                          <Input
+                            id={`name-${index}`}
+                            type="text"
+                            placeholder="名前"
+                            value={p.name}
+                            onChange={(e) => updateParticipant(index, 'name', e.target.value)}
+                            required
+                          />
                         </div>
+                        <div className="w-full sm:w-24">
+                          <Label
+                            htmlFor={`weight-${index}`}
+                            className="text-xs text-muted-foreground"
+                          >
+                            傾斜
+                          </Label>
+                          <Input
+                            id={`weight-${index}`}
+                            type="number"
+                            min="1"
+                            placeholder="100"
+                            value={p.weight}
+                            onChange={(e) =>
+                              updateParticipant(index, 'weight', parseInt(e.target.value) || 100)
+                            }
+                            required
+                          />
+                        </div>
+                        {currentData.participants.length > 1 && (
+                          <div className="flex items-end">
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="icon"
+                              onClick={() => removeParticipant(index)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ))}
-                  <Button type="button" variant="outline" onClick={addParticipant} className="w-full">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={addParticipant}
+                    className="w-full"
+                  >
                     <Plus className="h-4 w-4 mr-2" />
                     参加者を追加
                   </Button>
@@ -294,7 +304,9 @@ function EditSessionPage() {
               </div>
 
               <div className="space-y-1.5 sm:space-y-2">
-                <Label htmlFor="messageTemplate" className="text-sm sm:text-base">通知メッセージ（任意）</Label>
+                <Label htmlFor="messageTemplate" className="text-sm sm:text-base">
+                  通知メッセージ（任意）
+                </Label>
                 <Textarea
                   id="messageTemplate"
                   rows={3}
@@ -368,12 +380,19 @@ function EditSessionPage() {
                     setFormData({ ...currentData, attachDetailsLink: checked === true })
                   }
                 />
-                <Label htmlFor="attachDetailsLink" className="text-xs sm:text-sm font-normal cursor-pointer">
+                <Label
+                  htmlFor="attachDetailsLink"
+                  className="text-xs sm:text-sm font-normal cursor-pointer"
+                >
                   計算方法の説明リンクを添付
                 </Label>
               </div>
 
-              <Button type="submit" disabled={updateMutation.isPending} className="w-full sm:w-auto">
+              <Button
+                type="submit"
+                disabled={updateMutation.isPending}
+                className="w-full sm:w-auto"
+              >
                 {updateMutation.isPending ? '更新中...' : '更新'}
               </Button>
             </form>
@@ -403,12 +422,17 @@ function EditSessionPage() {
                 const lineUrl = generateLineUrl(message);
 
                 return (
-                  <div key={p.id} className="bg-muted/30 rounded-lg p-3 sm:p-4 space-y-3 sm:space-y-4">
+                  <div
+                    key={p.id}
+                    className="bg-muted/30 rounded-lg p-3 sm:p-4 space-y-3 sm:space-y-4"
+                  >
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-2">
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-base sm:text-lg">{p.name}</span>
                         {!isOrganizer && (
-                          <Badge variant="secondary" className="text-xs">傾斜: {p.weight}</Badge>
+                          <Badge variant="secondary" className="text-xs">
+                            傾斜: {p.weight}
+                          </Badge>
                         )}
                         {isOrganizer && (
                           <Badge variant="outline" className="text-xs">
@@ -425,8 +449,8 @@ function EditSessionPage() {
                         {session.roundingMethod === 'round_up'
                           ? `※ 切り上げにより発生した差額を受け取ります（${formatRoundingDigit(session.roundingUnit)}）`
                           : session.roundingMethod === 'round_down'
-                          ? `※ 切り下げにより発生した差額を負担します（${formatRoundingDigit(session.roundingUnit)}）`
-                          : `※ 四捨五入により発生した差額を処理します（${formatRoundingDigit(session.roundingUnit)}）`}
+                            ? `※ 切り下げにより発生した差額を負担します（${formatRoundingDigit(session.roundingUnit)}）`
+                            : `※ 四捨五入により発生した差額を処理します（${formatRoundingDigit(session.roundingUnit)}）`}
                       </div>
                     )}
                     {!isOrganizer && (
@@ -435,7 +459,10 @@ function EditSessionPage() {
                           <p className="text-sm whitespace-pre-wrap leading-relaxed">{message}</p>
                         </div>
                         <a href={lineUrl} target="_blank" rel="noopener noreferrer">
-                          <Button variant="default" className="w-full sm:w-auto gap-2 bg-green-600 hover:bg-green-700">
+                          <Button
+                            variant="default"
+                            className="w-full sm:w-auto gap-2 bg-green-600 hover:bg-green-700"
+                          >
                             <Send className="h-4 w-4" />
                             LINEで送る
                           </Button>

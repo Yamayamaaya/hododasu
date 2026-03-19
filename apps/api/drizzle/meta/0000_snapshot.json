@@ -58,13 +58,9 @@
         "session_participants_session_id_sessions_id_fk": {
           "name": "session_participants_session_id_sessions_id_fk",
           "tableFrom": "session_participants",
-          "columnsFrom": [
-            "session_id"
-          ],
+          "columnsFrom": ["session_id"],
           "tableTo": "sessions",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -138,9 +134,7 @@
       "uniqueConstraints": {
         "sessions_edit_id_unique": {
           "name": "sessions_edit_id_unique",
-          "columns": [
-            "edit_id"
-          ],
+          "columns": ["edit_id"],
           "nullsNotDistinct": false
         }
       },

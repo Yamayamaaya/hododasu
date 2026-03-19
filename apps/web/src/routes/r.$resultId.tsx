@@ -83,7 +83,9 @@ function ResultPage() {
       <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
         <Card className="shadow-lg border-0">
           <CardHeader>
-            <CardTitle className="text-2xl sm:text-4xl">{session.title || '無題のセッション'}</CardTitle>
+            <CardTitle className="text-2xl sm:text-4xl">
+              {session.title || '無題のセッション'}
+            </CardTitle>
             <CardDescription className="text-sm sm:text-lg">
               合計金額:{' '}
               <span className="text-xl sm:text-2xl font-bold text-primary">
@@ -103,32 +105,37 @@ function ResultPage() {
                 if (p.shareAmount === null) return null;
                 const isOrganizer = p.name === '幹事';
                 return (
-                  <div key={p.id} className="bg-muted/30 hover:bg-muted/50 transition-colors rounded-lg p-3 sm:p-4">
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-base sm:text-lg">{p.name}</span>
-                          {!isOrganizer && (
-                            <Badge variant="secondary" className="text-xs">傾斜: {p.weight}</Badge>
-                          )}
-                          {isOrganizer && (
-                            <Badge variant="outline" className="text-xs">
-                              幹事分
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="text-xl sm:text-3xl font-bold text-primary">
-                          {p.shareAmount.toLocaleString()}円
-                        </div>
+                  <div
+                    key={p.id}
+                    className="bg-muted/30 hover:bg-muted/50 transition-colors rounded-lg p-3 sm:p-4"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-base sm:text-lg">{p.name}</span>
+                        {!isOrganizer && (
+                          <Badge variant="secondary" className="text-xs">
+                            傾斜: {p.weight}
+                          </Badge>
+                        )}
+                        {isOrganizer && (
+                          <Badge variant="outline" className="text-xs">
+                            幹事分
+                          </Badge>
+                        )}
                       </div>
-                      {isOrganizer && session.roundingMethod && session.roundingUnit && (
-                        <div className="text-xs text-muted-foreground bg-muted/50 rounded p-2 mt-2">
-                          {session.roundingMethod === 'round_up'
-                            ? `※ 切り上げにより発生した差額を受け取ります（${formatRoundingDigit(session.roundingUnit)}）`
-                            : session.roundingMethod === 'round_down'
+                      <div className="text-xl sm:text-3xl font-bold text-primary">
+                        {p.shareAmount.toLocaleString()}円
+                      </div>
+                    </div>
+                    {isOrganizer && session.roundingMethod && session.roundingUnit && (
+                      <div className="text-xs text-muted-foreground bg-muted/50 rounded p-2 mt-2">
+                        {session.roundingMethod === 'round_up'
+                          ? `※ 切り上げにより発生した差額を受け取ります（${formatRoundingDigit(session.roundingUnit)}）`
+                          : session.roundingMethod === 'round_down'
                             ? `※ 切り下げにより発生した差額を負担します（${formatRoundingDigit(session.roundingUnit)}）`
                             : `※ 四捨五入により発生した差額を処理します（${formatRoundingDigit(session.roundingUnit)}）`}
-                        </div>
-                      )}
+                      </div>
+                    )}
                   </div>
                 );
               })}
