@@ -6,38 +6,7 @@ on:
       - main
 
 jobs:
-  deploy-api:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-
-      - name: Setup GCloud
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-
-      - name: Deploy API to Cloud Run
-        run: |
-          GCP_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
-          COMMIT_SHA="${{ github.sha }}"
-
-          gcloud config set project "${GCP_PROJECT_ID}"
-
-          gcloud builds submit \
-            --config=cloudbuild.prod.yaml \
-            --substitutions=_REGION=asia-northeast1,_SERVICE_NAME=hododasu-api,COMMIT_SHA=${COMMIT_SHA}
-        env:
-          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-
-  deploy-frontend:
+  deploy:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -55,17 +24,82 @@ jobs:
         with:
           version: 8.15.0
 
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint web app
-        run: pnpm --filter web lint
+      - name: Lint
+        run: pnpm lint
 
-      - name: Type-check web app
-        run: pnpm --filter web type-check
+      - name: Type check
+        run: pnpm type-check
 
-      - name: Build web app
-        run: pnpm --filter web build
+      - name: Build
+        run: pnpm build
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup GCloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Configure Docker for GCR
+        run: gcloud auth configure-docker
+
+      - name: Build and push Docker image
+        run: |
+          COMMIT_SHA="${{ github.sha }}"
+          GCP_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
+
+          docker build \
+            -t "gcr.io/${GCP_PROJECT_ID}/hododasu-api:${COMMIT_SHA}" \
+            -t "gcr.io/${GCP_PROJECT_ID}/hododasu-api:latest" \
+            -f Dockerfile.api.prod \
+            .
+
+          docker push "gcr.io/${GCP_PROJECT_ID}/hododasu-api:${COMMIT_SHA}"
+          docker push "gcr.io/${GCP_PROJECT_ID}/hododasu-api:latest"
+
+      - name: Deploy API to Cloud Run
+        run: |
+          COMMIT_SHA="${{ github.sha }}"
+          GCP_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
+
+          PROD_DB_URL_POOLED=$(gcloud secrets versions access latest \
+            --secret="NEON_PROD_DATABASE_URL_POOLED" \
+            --project="${GCP_PROJECT_ID}")
+
+          PROD_DB_URL_DIRECT=$(gcloud secrets versions access latest \
+            --secret="NEON_PROD_DATABASE_URL_DIRECT" \
+            --project="${GCP_PROJECT_ID}")
+
+          gcloud run deploy hododasu-api \
+            --image "gcr.io/${GCP_PROJECT_ID}/hododasu-api:${COMMIT_SHA}" \
+            --region asia-northeast1 \
+            --project "${GCP_PROJECT_ID}" \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars "DATABASE_URL_POOLED=${PROD_DB_URL_POOLED},DATABASE_URL_DIRECT=${PROD_DB_URL_DIRECT}" \
+            --memory 512Mi \
+            --cpu 1 \
+            --max-instances 10 \
+            --min-instances 0
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
