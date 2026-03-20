@@ -124,14 +124,12 @@ function LandingPage() {
               </span>
             </div>
           </div>
+          <Link to="/how" className="mt-4 inline-block">
+            <Button variant="link" className="text-xs sm:text-sm text-muted-foreground">
+              計算方法について
+            </Button>
+          </Link>
         </section>
-
-        {/* 計算方法リンク（サービス説明とは別スコープ） */}
-        <Link to="/how">
-          <Button variant="link" className="text-xs sm:text-sm text-muted-foreground">
-            計算方法について
-          </Button>
-        </Link>
       </div>
     </div>
   );

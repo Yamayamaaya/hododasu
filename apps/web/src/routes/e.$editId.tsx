@@ -180,18 +180,6 @@ function EditSessionPage() {
 
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!currentData.title.trim()) {
-      toast.error('タイトルを入力してください');
-      return;
-    }
-    if (currentData.participants.length === 0) {
-      toast.error('参加者を1人以上追加してください');
-      return;
-    }
-    if (currentData.participants.some((p) => !p.name.trim())) {
-      toast.error('参加者の名前を入力してください');
-      return;
-    }
     updateMutation.mutate(currentData as UpdateSessionRequest, {
       onSuccess: () => {
         setIsEditing(false);
