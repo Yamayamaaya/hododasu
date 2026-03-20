@@ -228,12 +228,6 @@ function EditSessionPage() {
       <div className="max-w-lg sm:max-w-3xl mx-auto space-y-5">
         {isEditing ? (
           <>
-            {/* 編集モード表示（ページレベル） */}
-            <div className="bg-primary/5 border border-primary/20 rounded-2xl px-4 py-3 flex items-center gap-2">
-              <Pencil className="h-3.5 w-3.5 text-primary" />
-              <span className="text-sm font-medium text-primary">編集モード</span>
-            </div>
-
             {/* 編集フォーム: title/amount + participants を1つのformで包含 */}
             <form id="edit-form" onSubmit={handleSubmit} className="space-y-5">
               {/* 基本情報カード */}
@@ -477,7 +471,12 @@ function EditSessionPage() {
       {/* Sticky save bar（編集中ラベルをここに配置 = ページレベル） */}
       {isEditing && (
         <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur border-t pb-[env(safe-area-inset-bottom)]">
-          <div className="max-w-lg sm:max-w-3xl mx-auto flex items-center justify-end gap-3 px-5 py-3">
+          <div className="max-w-lg sm:max-w-3xl mx-auto flex items-center gap-3 px-5 py-3">
+            <div className="flex items-center gap-1.5 shrink-0 text-primary">
+              <Pencil className="h-3.5 w-3.5" />
+              <span className="text-sm font-semibold">編集中</span>
+            </div>
+            <div className="flex-1" />
             <Button variant="outline" className="shrink-0 h-12 px-5" onClick={cancelEditing}>
               キャンセル
             </Button>
