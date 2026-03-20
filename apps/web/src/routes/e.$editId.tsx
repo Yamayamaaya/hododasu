@@ -188,7 +188,10 @@ function EditSessionPage() {
         <div>
           <h1 className="text-xl sm:text-2xl font-bold">{session.title}</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            合計: <span className="font-semibold text-foreground">{session.totalAmount.toLocaleString()}円</span>
+            合計:{' '}
+            <span className="font-semibold text-foreground">
+              {session.totalAmount.toLocaleString()}円
+            </span>
           </p>
         </div>
 
@@ -213,10 +216,7 @@ function EditSessionPage() {
                 const lineUrl = generateLineUrl(message);
 
                 return (
-                  <div
-                    key={p.id}
-                    className="bg-card rounded-xl shadow-sm border p-4 space-y-3"
-                  >
+                  <div key={p.id} className="bg-card rounded-xl shadow-sm border p-4 space-y-3">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-base">{p.name}</span>
@@ -255,9 +255,7 @@ function EditSessionPage() {
                           </div>
                         </details>
                         <a href={lineUrl} target="_blank" rel="noopener noreferrer">
-                          <Button
-                            className="w-full h-11 gap-2 bg-[#06C755] hover:bg-[#05a648] text-white"
-                          >
+                          <Button className="w-full h-11 gap-2 bg-[#06C755] hover:bg-[#05a648] text-white">
                             <Send className="h-4 w-4" />
                             LINEで送る
                           </Button>
@@ -328,7 +326,10 @@ function EditSessionPage() {
                 </Label>
                 <div className="space-y-2">
                   {currentData.participants.map((p, index) => (
-                    <div key={index} className="flex items-center gap-2 border-b border-border/50 pb-2">
+                    <div
+                      key={index}
+                      className="flex items-center gap-2 border-b border-border/50 pb-2"
+                    >
                       <div className="flex-1">
                         <Input
                           id={`name-${index}`}

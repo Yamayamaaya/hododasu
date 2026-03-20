@@ -99,7 +99,9 @@ function NewSessionPage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Group 1: 基本情報 */}
           <section>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">基本情報</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+              基本情報
+            </p>
             <div className="space-y-3">
               <div className="space-y-1.5">
                 <Label htmlFor="title" className="text-sm">
@@ -288,7 +290,11 @@ function NewSessionPage() {
           {/* Action buttons: sticky bottom */}
           <div className="sticky bottom-0 bg-background/95 backdrop-blur border-t p-4 -mx-4 mt-6">
             <div className="flex gap-3">
-              <Button type="submit" disabled={createMutation.isPending} className="flex-1 h-12 text-base font-bold">
+              <Button
+                type="submit"
+                disabled={createMutation.isPending}
+                className="flex-1 h-12 text-base font-bold"
+              >
                 {createMutation.isPending ? '作成中...' : '割り勘を作成'}
               </Button>
               <Link to="/">

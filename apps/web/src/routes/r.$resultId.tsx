@@ -81,11 +81,12 @@ function ResultPage() {
       <div className="max-w-lg sm:max-w-3xl mx-auto space-y-6">
         {/* Session header */}
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold">
-            {session.title || '無題のセッション'}
-          </h1>
+          <h1 className="text-xl sm:text-2xl font-bold">{session.title || '無題のセッション'}</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            合計: <span className="font-semibold text-foreground">{session.totalAmount.toLocaleString()}円</span>
+            合計:{' '}
+            <span className="font-semibold text-foreground">
+              {session.totalAmount.toLocaleString()}円
+            </span>
           </p>
         </div>
 
@@ -97,10 +98,7 @@ function ResultPage() {
                 if (p.shareAmount === null) return null;
                 const isOrganizer = p.name === '幹事';
                 return (
-                  <div
-                    key={p.id}
-                    className="bg-card rounded-xl shadow-sm border p-4"
-                  >
+                  <div key={p.id} className="bg-card rounded-xl shadow-sm border p-4">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-base">{p.name}</span>
@@ -133,9 +131,7 @@ function ResultPage() {
               })}
               <div className="flex justify-between items-center border-t pt-3 mt-3 text-base font-bold">
                 <span>合計</span>
-                <span className="text-primary text-lg">
-                  {totalShare.toLocaleString()}円
-                </span>
+                <span className="text-primary text-lg">{totalShare.toLocaleString()}円</span>
               </div>
             </div>
           </section>

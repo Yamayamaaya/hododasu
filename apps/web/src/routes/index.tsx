@@ -47,10 +47,7 @@ function LandingPage() {
           <p className="text-sm text-muted-foreground">傾斜付き割り勘 &amp; LINE送信</p>
           <div className="sm:max-w-xs sm:mx-auto">
             <Link to="/new" className="block">
-              <Button
-                size="lg"
-                className="w-full h-14 text-base font-bold rounded-xl"
-              >
+              <Button size="lg" className="w-full h-14 text-base font-bold rounded-xl">
                 割り勘を計算する
               </Button>
             </Link>
@@ -70,12 +67,13 @@ function LandingPage() {
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <Badge variant={item.type === 'edit' ? 'default' : 'secondary'} className="text-[10px] shrink-0">
+                        <Badge
+                          variant={item.type === 'edit' ? 'default' : 'secondary'}
+                          className="text-[10px] shrink-0"
+                        >
                           {item.type === 'edit' ? '編集' : '結果'}
                         </Badge>
-                        <span className="text-sm font-medium truncate">
-                          {item.title}
-                        </span>
+                        <span className="text-sm font-medium truncate">{item.title}</span>
                       </div>
                       <span className="text-xs text-muted-foreground shrink-0">
                         {formatDate(item.timestamp)}
