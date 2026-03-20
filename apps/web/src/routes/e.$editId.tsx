@@ -6,7 +6,6 @@ import { buildLineMessage, generateLineUrl } from '../lib/line';
 import { addViewHistory } from '../lib/history';
 import { SessionInput, UpdateSessionRequest } from '@hododasu/shared';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -21,7 +20,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowLeft, Plus, Trash2, Send, AlertCircle, Home } from 'lucide-react';
+import { Plus, Trash2, Send, AlertCircle, Home, ChevronDown } from 'lucide-react';
 
 export const Route = createFileRoute('/e/$editId')({
   component: EditSessionPage,
@@ -82,7 +81,6 @@ function EditSessionPage() {
 
   const [formData, setFormData] = useState<SessionInput | null>(null);
 
-  // セッション情報が取得できたら履歴に追加
   useEffect(() => {
     if (session) {
       addViewHistory({
@@ -97,9 +95,9 @@ function EditSessionPage() {
 
   if (isLoading) {
     return (
-      <div className="py-4 sm:py-12 px-3 sm:px-4 bg-gradient-to-br from-background to-muted/20">
-        <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
-          <Skeleton className="h-32 w-full" />
+      <div className="px-4 py-6 sm:py-10">
+        <div className="max-w-lg sm:max-w-3xl mx-auto space-y-4">
+          <Skeleton className="h-20 w-full" />
           <Skeleton className="h-64 w-full" />
         </div>
       </div>
@@ -108,8 +106,8 @@ function EditSessionPage() {
 
   if (!session) {
     return (
-      <div className="py-4 sm:py-12 px-3 sm:px-4 bg-gradient-to-br from-background to-muted/20">
-        <div className="max-w-4xl mx-auto">
+      <div className="px-4 py-6 sm:py-10">
+        <div className="max-w-lg sm:max-w-3xl mx-auto">
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription className="flex items-center justify-between">
@@ -131,7 +129,7 @@ function EditSessionPage() {
     title: session.title,
     totalAmount: session.totalAmount,
     participants: session.participants
-      .filter((p) => p.name !== '幹事') // 幹事は除外
+      .filter((p) => p.name !== '幹事')
       .map((p) => ({
         name: p.name,
         weight: p.weight,
@@ -181,47 +179,138 @@ function EditSessionPage() {
   };
 
   const baseUrl = window.location.origin;
+  const hasResults = session.participants.some((p) => p.shareAmount !== null);
 
   return (
-    <div className="py-4 sm:py-12 px-3 sm:px-4 bg-gradient-to-br from-background to-muted/20">
-      <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
-        <Link to="/">
-          <Button variant="ghost" className="gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            トップに戻る
-          </Button>
-        </Link>
+    <div className="px-4 py-6 sm:py-10">
+      <div className="max-w-lg sm:max-w-3xl mx-auto space-y-6">
+        {/* Session header */}
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold">{session.title}</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            合計: <span className="font-semibold text-foreground">{session.totalAmount.toLocaleString()}円</span>
+          </p>
+        </div>
 
-        <Card className="shadow-lg border-0">
-          <CardHeader>
-            <CardTitle className="text-2xl sm:text-4xl">{session.title}</CardTitle>
-            <CardDescription className="text-sm sm:text-base">
-              セッションの編集と計算結果の確認
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-              <div className="space-y-1.5 sm:space-y-2">
-                <Label htmlFor="title" className="text-sm sm:text-base">
+        {/* 計算結果（メイン表示） */}
+        {hasResults && (
+          <section>
+            <h2 className="text-base font-semibold mb-3">計算結果</h2>
+            <div className="space-y-3">
+              {session.participants.map((p) => {
+                if (p.shareAmount === null) return null;
+                const isOrganizer = p.name === '幹事';
+                const message = buildLineMessage(
+                  session.messageTemplate,
+                  p.name,
+                  p.shareAmount,
+                  session.title,
+                  session.totalAmount,
+                  session.attachDetailsLink,
+                  baseUrl,
+                  session.resultId
+                );
+                const lineUrl = generateLineUrl(message);
+
+                return (
+                  <div
+                    key={p.id}
+                    className="bg-card rounded-xl shadow-sm border p-4 space-y-3"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-base">{p.name}</span>
+                        {!isOrganizer && (
+                          <Badge variant="secondary" className="text-xs">
+                            傾斜: {p.weight}
+                          </Badge>
+                        )}
+                        {isOrganizer && (
+                          <Badge variant="outline" className="text-xs">
+                            幹事分
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="text-2xl sm:text-3xl font-bold text-primary">
+                        {p.shareAmount.toLocaleString()}円
+                      </div>
+                    </div>
+                    {isOrganizer && session.roundingMethod && session.roundingUnit && (
+                      <div className="text-xs text-muted-foreground bg-muted/50 rounded p-2">
+                        {session.roundingMethod === 'round_up'
+                          ? `※ 切り上げにより発生した差額を受け取ります（${formatRoundingDigit(session.roundingUnit)}）`
+                          : session.roundingMethod === 'round_down'
+                            ? `※ 切り下げにより発生した差額を負担します（${formatRoundingDigit(session.roundingUnit)}）`
+                            : `※ 四捨五入により発生した差額を処理します（${formatRoundingDigit(session.roundingUnit)}）`}
+                      </div>
+                    )}
+                    {!isOrganizer && (
+                      <>
+                        <details>
+                          <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
+                            メッセージを確認
+                          </summary>
+                          <div className="bg-muted/50 rounded-lg p-3 mt-2">
+                            <p className="text-sm whitespace-pre-wrap leading-relaxed">{message}</p>
+                          </div>
+                        </details>
+                        <a href={lineUrl} target="_blank" rel="noopener noreferrer">
+                          <Button
+                            className="w-full h-11 gap-2 bg-[#06C755] hover:bg-[#05a648] text-white"
+                          >
+                            <Send className="h-4 w-4" />
+                            LINEで送る
+                          </Button>
+                        </a>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+              <div className="flex justify-between items-center border-t pt-3 mt-3 text-base font-bold">
+                <span>合計</span>
+                <span className="text-primary text-lg">
+                  {session.participants
+                    .reduce((sum, p) => sum + (p.shareAmount || 0), 0)
+                    .toLocaleString()}
+                  円
+                </span>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* 編集フォーム（折り畳み） */}
+        <details className="group">
+          <summary className="flex items-center justify-between cursor-pointer py-3">
+            <h2 className="text-base font-semibold">内容を編集</h2>
+            <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180" />
+          </summary>
+          <div className="pt-4">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-1.5">
+                <Label htmlFor="title" className="text-sm">
                   タイトル <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="title"
                   type="text"
+                  className="h-12"
                   value={currentData.title}
                   onChange={(e) => setFormData({ ...currentData, title: e.target.value })}
                   required
                 />
               </div>
 
-              <div className="space-y-1.5 sm:space-y-2">
-                <Label htmlFor="totalAmount" className="text-sm sm:text-base">
+              <div className="space-y-1.5">
+                <Label htmlFor="totalAmount" className="text-sm">
                   合計金額（円）<span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="totalAmount"
                   type="number"
                   min="0"
+                  className="h-12"
                   value={currentData.totalAmount || ''}
                   onChange={(e) =>
                     setFormData({
@@ -233,69 +322,56 @@ function EditSessionPage() {
                 />
               </div>
 
-              <div className="space-y-2 sm:space-y-3">
-                <Label className="text-sm sm:text-base">
+              <div className="space-y-2">
+                <Label className="text-sm">
                   参加者 <span className="text-destructive">*</span>
                 </Label>
-                <div className="space-y-2 sm:space-y-3">
+                <div className="space-y-2">
                   {currentData.participants.map((p, index) => (
-                    <div key={index} className="bg-muted/30 rounded-lg p-3 sm:p-4">
-                      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                        <div className="flex-1">
-                          <Label
-                            htmlFor={`name-${index}`}
-                            className="text-xs text-muted-foreground"
-                          >
-                            名前
-                          </Label>
-                          <Input
-                            id={`name-${index}`}
-                            type="text"
-                            placeholder="名前"
-                            value={p.name}
-                            onChange={(e) => updateParticipant(index, 'name', e.target.value)}
-                            required
-                          />
-                        </div>
-                        <div className="w-full sm:w-24">
-                          <Label
-                            htmlFor={`weight-${index}`}
-                            className="text-xs text-muted-foreground"
-                          >
-                            傾斜
-                          </Label>
-                          <Input
-                            id={`weight-${index}`}
-                            type="number"
-                            min="1"
-                            placeholder="100"
-                            value={p.weight}
-                            onChange={(e) =>
-                              updateParticipant(index, 'weight', parseInt(e.target.value) || 100)
-                            }
-                            required
-                          />
-                        </div>
-                        {currentData.participants.length > 1 && (
-                          <div className="flex items-end">
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="icon"
-                              onClick={() => removeParticipant(index)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
+                    <div key={index} className="flex items-center gap-2 border-b border-border/50 pb-2">
+                      <div className="flex-1">
+                        <Input
+                          id={`name-${index}`}
+                          type="text"
+                          className="h-12"
+                          placeholder="名前"
+                          value={p.name}
+                          onChange={(e) => updateParticipant(index, 'name', e.target.value)}
+                          required
+                        />
                       </div>
+                      <div className="w-20">
+                        <Input
+                          id={`weight-${index}`}
+                          type="number"
+                          min="1"
+                          className="h-12"
+                          placeholder="傾斜"
+                          value={p.weight}
+                          onChange={(e) =>
+                            updateParticipant(index, 'weight', parseInt(e.target.value) || 100)
+                          }
+                          required
+                        />
+                      </div>
+                      {currentData.participants.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="text-muted-foreground hover:text-destructive shrink-0"
+                          onClick={() => removeParticipant(index)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   ))}
                   <Button
                     type="button"
                     variant="outline"
                     onClick={addParticipant}
-                    className="w-full"
+                    className="w-full border-dashed"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     参加者を追加
@@ -303,8 +379,8 @@ function EditSessionPage() {
                 </div>
               </div>
 
-              <div className="space-y-1.5 sm:space-y-2">
-                <Label htmlFor="messageTemplate" className="text-sm sm:text-base">
+              <div className="space-y-1.5">
+                <Label htmlFor="messageTemplate" className="text-sm">
                   通知メッセージ（任意）
                 </Label>
                 <Textarea
@@ -319,9 +395,9 @@ function EditSessionPage() {
                 </p>
               </div>
 
-              <div className="space-y-4 sm:space-y-6 border-t pt-4 sm:pt-6">
-                <div className="space-y-1.5 sm:space-y-2">
-                  <Label htmlFor="roundingMethod" className="text-sm sm:text-base">
+              <div className="space-y-4 border-t pt-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="roundingMethod" className="text-sm">
                     端数処理方法 <span className="text-destructive">*</span>
                   </Label>
                   <Select
@@ -334,7 +410,7 @@ function EditSessionPage() {
                     }
                     required
                   >
-                    <SelectTrigger id="roundingMethod">
+                    <SelectTrigger id="roundingMethod" className="h-12">
                       <SelectValue placeholder="端数処理方法を選択" />
                     </SelectTrigger>
                     <SelectContent>
@@ -345,8 +421,8 @@ function EditSessionPage() {
                   </Select>
                 </div>
 
-                <div className="space-y-1.5 sm:space-y-2">
-                  <Label htmlFor="roundingUnit" className="text-sm sm:text-base">
+                <div className="space-y-1.5">
+                  <Label htmlFor="roundingUnit" className="text-sm">
                     端数処理の位 <span className="text-destructive">*</span>
                   </Label>
                   <Select
@@ -359,7 +435,7 @@ function EditSessionPage() {
                     }
                     required
                   >
-                    <SelectTrigger id="roundingUnit">
+                    <SelectTrigger id="roundingUnit" className="h-12">
                       <SelectValue placeholder="選択してください" />
                     </SelectTrigger>
                     <SelectContent>
@@ -391,118 +467,26 @@ function EditSessionPage() {
               <Button
                 type="submit"
                 disabled={updateMutation.isPending}
-                className="w-full sm:w-auto"
+                className="w-full h-12 text-base"
               >
                 {updateMutation.isPending ? '更新中...' : '更新'}
               </Button>
             </form>
-          </CardContent>
-        </Card>
 
-        {/* 計算結果表示 */}
-        {session.participants.some((p) => p.shareAmount !== null) && (
-          <Card className="shadow-lg border-0">
-            <CardHeader>
-              <CardTitle className="text-xl sm:text-2xl">計算結果</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 sm:space-y-4">
-              {session.participants.map((p) => {
-                if (p.shareAmount === null) return null;
-                const isOrganizer = p.name === '幹事';
-                const message = buildLineMessage(
-                  session.messageTemplate,
-                  p.name,
-                  p.shareAmount,
-                  session.title,
-                  session.totalAmount,
-                  session.attachDetailsLink,
-                  baseUrl,
-                  session.resultId
-                );
-                const lineUrl = generateLineUrl(message);
-
-                return (
-                  <div
-                    key={p.id}
-                    className="bg-muted/30 rounded-lg p-3 sm:p-4 space-y-3 sm:space-y-4"
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-base sm:text-lg">{p.name}</span>
-                        {!isOrganizer && (
-                          <Badge variant="secondary" className="text-xs">
-                            傾斜: {p.weight}
-                          </Badge>
-                        )}
-                        {isOrganizer && (
-                          <Badge variant="outline" className="text-xs">
-                            幹事分
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="text-lg sm:text-2xl font-bold text-primary">
-                        {p.shareAmount.toLocaleString()}円
-                      </div>
-                    </div>
-                    {isOrganizer && session.roundingMethod && session.roundingUnit && (
-                      <div className="text-xs text-muted-foreground bg-muted/50 rounded p-2">
-                        {session.roundingMethod === 'round_up'
-                          ? `※ 切り上げにより発生した差額を受け取ります（${formatRoundingDigit(session.roundingUnit)}）`
-                          : session.roundingMethod === 'round_down'
-                            ? `※ 切り下げにより発生した差額を負担します（${formatRoundingDigit(session.roundingUnit)}）`
-                            : `※ 四捨五入により発生した差額を処理します（${formatRoundingDigit(session.roundingUnit)}）`}
-                      </div>
-                    )}
-                    {!isOrganizer && (
-                      <>
-                        <div className="bg-muted/50 rounded-lg p-3 sm:p-4">
-                          <p className="text-sm whitespace-pre-wrap leading-relaxed">{message}</p>
-                        </div>
-                        <a href={lineUrl} target="_blank" rel="noopener noreferrer">
-                          <Button
-                            variant="default"
-                            className="w-full sm:w-auto gap-2 bg-green-600 hover:bg-green-700"
-                          >
-                            <Send className="h-4 w-4" />
-                            LINEで送る
-                          </Button>
-                        </a>
-                      </>
-                    )}
-                  </div>
-                );
-              })}
-              <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t">
-                <div className="flex justify-between items-center text-base sm:text-lg font-bold">
-                  <span>合計</span>
-                  <span className="text-primary text-lg sm:text-xl">
-                    {session.participants
-                      .reduce((sum, p) => sum + (p.shareAmount || 0), 0)
-                      .toLocaleString()}
-                    円
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        <Card className="shadow-lg border-0">
-          <CardContent className="pt-4 sm:pt-6">
             <Button
-              variant="destructive"
+              variant="ghost"
+              className="text-destructive text-sm w-full mt-4"
               onClick={() => {
                 if (confirm('本当に削除しますか？')) {
                   deleteMutation.mutate();
                 }
               }}
               disabled={deleteMutation.isPending}
-              className="w-full sm:w-auto"
             >
               {deleteMutation.isPending ? '削除中...' : 'セッションを削除'}
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </details>
       </div>
     </div>
   );
