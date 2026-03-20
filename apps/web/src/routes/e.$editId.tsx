@@ -414,12 +414,26 @@ function EditSessionPage() {
                                 メッセージを確認して送信してください
                               </DrawerDescription>
                             </DrawerHeader>
-                            <div className="px-4 pb-2">
+                            <div className="px-4 pb-2 space-y-2">
                               <div className="bg-muted/50 rounded-xl p-4">
                                 <p className="text-sm whitespace-pre-wrap leading-relaxed">
                                   {message}
                                 </p>
                               </div>
+                              <DrawerClose asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-xs text-muted-foreground gap-1"
+                                  onClick={() => {
+                                    startEditing();
+                                    setTimeout(() => setIsSettingsOpen(true), 100);
+                                  }}
+                                >
+                                  <Pencil className="h-3 w-3" />
+                                  メッセージを編集
+                                </Button>
+                              </DrawerClose>
                             </div>
                             <DrawerFooter className="pb-[env(safe-area-inset-bottom)]">
                               <a href={lineUrl} target="_blank" rel="noopener noreferrer">
