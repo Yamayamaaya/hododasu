@@ -43,10 +43,10 @@ function ResultPage() {
 
   if (isLoading) {
     return (
-      <div className="px-4 py-6 sm:py-10">
+      <div className="px-5 py-6 sm:py-10">
         <div className="max-w-lg sm:max-w-3xl mx-auto space-y-4">
-          <Skeleton className="h-20 w-full" />
-          <Skeleton className="h-64 w-full" />
+          <Skeleton className="h-24 w-full rounded-2xl" />
+          <Skeleton className="h-64 w-full rounded-2xl" />
         </div>
       </div>
     );
@@ -54,7 +54,7 @@ function ResultPage() {
 
   if (!session) {
     return (
-      <div className="px-4 py-6 sm:py-10">
+      <div className="px-5 py-6 sm:py-10">
         <div className="max-w-lg sm:max-w-3xl mx-auto">
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -77,28 +77,30 @@ function ResultPage() {
   const hasResults = session.participants.some((p) => p.shareAmount !== null);
 
   return (
-    <div className="px-4 py-6 sm:py-10">
-      <div className="max-w-lg sm:max-w-3xl mx-auto space-y-6">
-        {/* Session header */}
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold">{session.title || '無題のセッション'}</h1>
+    <div className="px-5 py-6 sm:py-10">
+      <div className="max-w-lg sm:max-w-3xl mx-auto space-y-5">
+        {/* Session header card */}
+        <div className="bg-card rounded-2xl border shadow-sm p-4 sm:p-5">
+          <h1 className="text-lg sm:text-2xl font-bold">{session.title || '無題のセッション'}</h1>
           <p className="text-sm text-muted-foreground mt-1">
             合計:{' '}
-            <span className="font-semibold text-foreground">
+            <span className="font-semibold text-foreground text-base">
               {session.totalAmount.toLocaleString()}円
             </span>
           </p>
         </div>
 
         {hasResults ? (
-          <section>
-            <h2 className="text-base font-semibold mb-3">計算結果</h2>
-            <div className="space-y-3">
+          <section className="bg-card rounded-2xl border shadow-sm overflow-hidden">
+            <div className="px-4 sm:px-5 pt-4 sm:pt-5 pb-2">
+              <h2 className="text-sm font-semibold text-muted-foreground">計算結果</h2>
+            </div>
+            <div className="divide-y">
               {session.participants.map((p) => {
                 if (p.shareAmount === null) return null;
                 const isOrganizer = p.name === '幹事';
                 return (
-                  <div key={p.id} className="bg-card rounded-xl shadow-sm border p-4">
+                  <div key={p.id} className="px-4 sm:px-5 py-4">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-base">{p.name}</span>
@@ -118,7 +120,7 @@ function ResultPage() {
                       </div>
                     </div>
                     {isOrganizer && session.roundingMethod && session.roundingUnit && (
-                      <div className="text-xs text-muted-foreground bg-muted/50 rounded p-2 mt-2">
+                      <div className="text-xs text-muted-foreground bg-muted/50 rounded-lg p-2.5 mt-2">
                         {session.roundingMethod === 'round_up'
                           ? `※ 切り上げにより発生した差額を受け取ります（${formatRoundingDigit(session.roundingUnit)}）`
                           : session.roundingMethod === 'round_down'
@@ -129,14 +131,15 @@ function ResultPage() {
                   </div>
                 );
               })}
-              <div className="flex justify-between items-center border-t pt-3 mt-3 text-base font-bold">
-                <span>合計</span>
-                <span className="text-primary text-lg">{totalShare.toLocaleString()}円</span>
-              </div>
+            </div>
+            {/* 合計 footer */}
+            <div className="flex justify-between items-center px-4 sm:px-5 py-3.5 bg-muted/30 border-t text-base font-bold">
+              <span>合計</span>
+              <span className="text-primary text-lg">{totalShare.toLocaleString()}円</span>
             </div>
           </section>
         ) : (
-          <div className="text-center text-sm text-muted-foreground py-8">
+          <div className="bg-card rounded-2xl border shadow-sm p-8 text-center text-sm text-muted-foreground">
             計算結果がまだありません
           </div>
         )}

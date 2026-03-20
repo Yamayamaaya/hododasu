@@ -120,10 +120,10 @@ function EditSessionPage() {
 
   if (isLoading) {
     return (
-      <div className="px-4 py-6 sm:py-10">
+      <div className="px-5 py-6 sm:py-10">
         <div className="max-w-lg sm:max-w-3xl mx-auto space-y-4">
-          <Skeleton className="h-20 w-full" />
-          <Skeleton className="h-64 w-full" />
+          <Skeleton className="h-24 w-full rounded-2xl" />
+          <Skeleton className="h-64 w-full rounded-2xl" />
         </div>
       </div>
     );
@@ -131,7 +131,7 @@ function EditSessionPage() {
 
   if (!session) {
     return (
-      <div className="px-4 py-6 sm:py-10">
+      <div className="px-5 py-6 sm:py-10">
         <div className="max-w-lg sm:max-w-3xl mx-auto">
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -224,16 +224,14 @@ function EditSessionPage() {
   const hasResults = session.participants.some((p) => p.shareAmount !== null);
 
   return (
-    <div className="px-4 py-6 sm:py-10">
-      <div className="max-w-lg sm:max-w-3xl mx-auto space-y-6">
+    <div className="px-5 py-6 sm:py-10">
+      <div className="max-w-lg sm:max-w-3xl mx-auto space-y-5">
         {/* ヘッダー */}
         {isEditing ? (
-          <div className="border-l-4 border-primary pl-4 space-y-3">
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="text-xs">
-                編集中
-              </Badge>
-            </div>
+          <div className="bg-card rounded-2xl border shadow-sm border-l-4 border-l-primary p-4 sm:p-5 space-y-4">
+            <Badge variant="secondary" className="text-xs">
+              編集中
+            </Badge>
             <div className="space-y-1.5">
               <Label htmlFor="title" className="text-sm">
                 タイトル <span className="text-destructive">*</span>
@@ -268,37 +266,45 @@ function EditSessionPage() {
             </div>
           </div>
         ) : (
-          <div className="flex items-start justify-between">
+          <div className="bg-card rounded-2xl border shadow-sm p-4 sm:p-5 flex items-start justify-between">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold">{session.title}</h1>
+              <h1 className="text-lg sm:text-2xl font-bold">{session.title}</h1>
               <p className="text-sm text-muted-foreground mt-1">
                 合計:{' '}
-                <span className="font-semibold text-foreground">
+                <span className="font-semibold text-foreground text-base">
                   {session.totalAmount.toLocaleString()}円
                 </span>
               </p>
             </div>
-            <Button variant="ghost" size="icon" onClick={startEditing}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-11 w-11 shrink-0"
+              onClick={startEditing}
+            >
               <Pencil className="h-4 w-4" />
             </Button>
           </div>
         )}
 
         {isEditing ? (
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* 参加者編集 */}
-            <div className="space-y-2">
-              <Label className="text-sm">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* 参加者編集カード */}
+            <section className="bg-card rounded-2xl border shadow-sm p-4 sm:p-5 space-y-3">
+              <h2 className="text-sm font-semibold text-muted-foreground">
                 参加者 <span className="text-destructive">*</span>
-              </Label>
+              </h2>
               <div className="space-y-2">
                 {currentData.participants.map((p, index) => (
-                  <div key={index} className="flex items-center gap-2 bg-primary/5 rounded-lg p-3">
+                  <div
+                    key={index}
+                    className="flex items-center gap-2 bg-primary/5 rounded-xl p-2.5"
+                  >
                     <div className="flex-1">
                       <Input
                         id={`name-${index}`}
                         type="text"
-                        className="h-12"
+                        className="h-11"
                         placeholder="名前"
                         value={p.name}
                         onChange={(e) => updateParticipant(index, 'name', e.target.value)}
@@ -310,7 +316,7 @@ function EditSessionPage() {
                         id={`weight-${index}`}
                         type="number"
                         min="1"
-                        className="h-12"
+                        className="h-11"
                         placeholder="傾斜"
                         value={p.weight}
                         onChange={(e) =>
@@ -324,7 +330,7 @@ function EditSessionPage() {
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="text-muted-foreground hover:text-destructive shrink-0"
+                        className="text-muted-foreground hover:text-destructive shrink-0 h-11 w-11"
                         onClick={() => removeParticipant(index)}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -336,19 +342,19 @@ function EditSessionPage() {
                   type="button"
                   variant="outline"
                   onClick={addParticipant}
-                  className="w-full border-dashed"
+                  className="w-full h-11 border-dashed"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   参加者を追加
                 </Button>
               </div>
-            </div>
+            </section>
 
             {/* 詳細設定ボタン */}
             <Button
               type="button"
               variant="outline"
-              className="w-full gap-2"
+              className="w-full h-12 gap-2 rounded-2xl"
               onClick={() => setIsSettingsOpen(true)}
             >
               <Settings className="h-4 w-4" />
@@ -361,7 +367,7 @@ function EditSessionPage() {
                 <Button
                   type="button"
                   variant="ghost"
-                  className="text-destructive text-sm w-full"
+                  className="text-destructive text-sm w-full h-11"
                   disabled={deleteMutation.isPending}
                 >
                   {deleteMutation.isPending ? '削除中...' : 'セッションを削除'}
@@ -389,11 +395,13 @@ function EditSessionPage() {
             <div className="h-24" />
           </form>
         ) : (
-          /* 計算結果 + LINE送信（既存） */
+          /* 計算結果 + LINE送信 */
           hasResults && (
-            <section>
-              <h2 className="text-base font-semibold mb-3">計算結果</h2>
-              <div className="space-y-3">
+            <section className="bg-card rounded-2xl border shadow-sm overflow-hidden">
+              <div className="px-4 sm:px-5 pt-4 sm:pt-5 pb-2">
+                <h2 className="text-sm font-semibold text-muted-foreground">計算結果</h2>
+              </div>
+              <div className="divide-y">
                 {session.participants.map((p) => {
                   if (p.shareAmount === null) return null;
                   const isOrganizer = p.name === '幹事';
@@ -410,7 +418,7 @@ function EditSessionPage() {
                   const lineUrl = generateLineUrl(message);
 
                   return (
-                    <div key={p.id} className="bg-card rounded-xl shadow-sm border p-4 space-y-3">
+                    <div key={p.id} className="px-4 sm:px-5 py-4 space-y-3">
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-base">{p.name}</span>
@@ -430,7 +438,7 @@ function EditSessionPage() {
                         </div>
                       </div>
                       {isOrganizer && session.roundingMethod && session.roundingUnit && (
-                        <div className="text-xs text-muted-foreground bg-muted/50 rounded p-2">
+                        <div className="text-xs text-muted-foreground bg-muted/50 rounded-lg p-2.5">
                           {session.roundingMethod === 'round_up'
                             ? `※ 切り上げにより発生した差額を受け取ります（${formatRoundingDigit(session.roundingUnit)}）`
                             : session.roundingMethod === 'round_down'
@@ -441,7 +449,7 @@ function EditSessionPage() {
                       {!isOrganizer && (
                         <Drawer>
                           <DrawerTrigger asChild>
-                            <Button className="w-full h-11 gap-2 bg-[#06C755] hover:bg-[#05a648] text-white">
+                            <Button className="w-full h-12 gap-2 bg-[#06C755] hover:bg-[#05a648] text-white text-sm font-bold rounded-xl">
                               <Send className="h-4 w-4" />
                               LINEで送る
                             </Button>
@@ -454,13 +462,13 @@ function EditSessionPage() {
                               </DrawerDescription>
                             </DrawerHeader>
                             <div className="px-4 pb-2">
-                              <div className="bg-muted/50 rounded-lg p-4">
+                              <div className="bg-muted/50 rounded-xl p-4">
                                 <p className="text-sm whitespace-pre-wrap leading-relaxed">
                                   {message}
                                 </p>
                               </div>
                             </div>
-                            <DrawerFooter>
+                            <DrawerFooter className="pb-[env(safe-area-inset-bottom)]">
                               <a href={lineUrl} target="_blank" rel="noopener noreferrer">
                                 <Button className="w-full h-12 gap-2 bg-[#06C755] hover:bg-[#05a648] text-white text-base font-bold">
                                   <Send className="h-4 w-4" />
@@ -468,7 +476,7 @@ function EditSessionPage() {
                                 </Button>
                               </a>
                               <DrawerClose asChild>
-                                <Button variant="outline" className="w-full">
+                                <Button variant="outline" className="w-full h-11">
                                   キャンセル
                                 </Button>
                               </DrawerClose>
@@ -479,15 +487,16 @@ function EditSessionPage() {
                     </div>
                   );
                 })}
-                <div className="flex justify-between items-center border-t pt-3 mt-3 text-base font-bold">
-                  <span>合計</span>
-                  <span className="text-primary text-lg">
-                    {session.participants
-                      .reduce((sum, p) => sum + (p.shareAmount || 0), 0)
-                      .toLocaleString()}
-                    円
-                  </span>
-                </div>
+              </div>
+              {/* 合計 footer */}
+              <div className="flex justify-between items-center px-4 sm:px-5 py-3.5 bg-muted/30 border-t text-base font-bold">
+                <span>合計</span>
+                <span className="text-primary text-lg">
+                  {session.participants
+                    .reduce((sum, p) => sum + (p.shareAmount || 0), 0)
+                    .toLocaleString()}
+                  円
+                </span>
               </div>
             </section>
           )
@@ -496,13 +505,13 @@ function EditSessionPage() {
 
       {/* Sticky save bar */}
       {isEditing && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-background border-t">
-          <div className="max-w-lg sm:max-w-3xl mx-auto flex gap-3 p-4">
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur border-t pb-[env(safe-area-inset-bottom)]">
+          <div className="max-w-lg sm:max-w-3xl mx-auto flex gap-3 px-5 py-3">
             <Button variant="outline" className="flex-1 h-12" onClick={cancelEditing}>
               キャンセル
             </Button>
             <Button
-              className="flex-1 h-12"
+              className="flex-1 h-12 font-bold"
               disabled={updateMutation.isPending}
               onClick={() => handleSubmit()}
             >
@@ -586,7 +595,7 @@ function EditSessionPage() {
                 </Select>
               </div>
 
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 min-h-[44px]">
                 <Checkbox
                   id="attachDetailsLink"
                   checked={currentData.attachDetailsLink}
@@ -602,9 +611,9 @@ function EditSessionPage() {
                 </Label>
               </div>
             </div>
-            <DrawerFooter>
+            <DrawerFooter className="pb-[env(safe-area-inset-bottom)]">
               <DrawerClose asChild>
-                <Button variant="outline" className="w-full">
+                <Button variant="outline" className="w-full h-11">
                   閉じる
                 </Button>
               </DrawerClose>

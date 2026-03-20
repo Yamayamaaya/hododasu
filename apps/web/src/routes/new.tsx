@@ -95,62 +95,58 @@ function NewSessionPage() {
   };
 
   return (
-    <div className="px-4 py-6 sm:py-10">
+    <div className="px-5 py-6 sm:py-10">
       <div className="max-w-lg sm:max-w-2xl mx-auto">
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
           {/* Group 1: 基本情報 */}
-          <section>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-              基本情報
-            </p>
-            <div className="space-y-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="title" className="text-sm">
-                  タイトル <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="title"
-                  type="text"
-                  className="h-12"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="例: 忘年会"
-                  required
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="totalAmount" className="text-sm">
-                  合計金額（円）<span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="totalAmount"
-                  type="number"
-                  min="0"
-                  className="h-12"
-                  value={formData.totalAmount || ''}
-                  onChange={(e) =>
-                    setFormData({ ...formData, totalAmount: parseInt(e.target.value) || 0 })
-                  }
-                  required
-                  placeholder="10000"
-                />
-              </div>
+          <section className="bg-card rounded-2xl border shadow-sm p-4 sm:p-5 space-y-4">
+            <h2 className="text-sm font-semibold text-muted-foreground">基本情報</h2>
+            <div className="space-y-1.5">
+              <Label htmlFor="title" className="text-sm">
+                タイトル <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="title"
+                type="text"
+                className="h-12"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                placeholder="例: 忘年会"
+                required
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="totalAmount" className="text-sm">
+                合計金額（円）<span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="totalAmount"
+                type="number"
+                min="0"
+                className="h-12"
+                value={formData.totalAmount || ''}
+                onChange={(e) =>
+                  setFormData({ ...formData, totalAmount: parseInt(e.target.value) || 0 })
+                }
+                required
+                placeholder="10000"
+              />
             </div>
           </section>
 
           {/* Group 2: 参加者 */}
-          <section>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          <section className="bg-card rounded-2xl border shadow-sm p-4 sm:p-5 space-y-3">
+            <h2 className="text-sm font-semibold text-muted-foreground">
               参加者 <span className="text-destructive">*</span>
-            </p>
+            </h2>
             <div className="space-y-2">
               {formData.participants.map((p, index) => (
-                <div key={index} className="flex items-center gap-2 border-b border-border/50 pb-2">
+                <div key={index} className="flex items-center gap-2 bg-muted/40 rounded-xl p-2.5">
                   <div className="flex-1">
                     <Input
                       id={`name-${index}`}
                       type="text"
-                      className="h-12"
+                      className="h-11"
                       placeholder="名前"
                       value={p.name}
                       onChange={(e) => updateParticipant(index, 'name', e.target.value)}
@@ -162,7 +158,7 @@ function NewSessionPage() {
                       id={`weight-${index}`}
                       type="number"
                       min="1"
-                      className="h-12"
+                      className="h-11"
                       placeholder="傾斜"
                       value={p.weight}
                       onChange={(e) =>
@@ -176,7 +172,7 @@ function NewSessionPage() {
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="text-muted-foreground hover:text-destructive shrink-0"
+                      className="text-muted-foreground hover:text-destructive shrink-0 h-11 w-11"
                       onClick={() => removeParticipant(index)}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -188,7 +184,7 @@ function NewSessionPage() {
                 type="button"
                 variant="outline"
                 onClick={addParticipant}
-                className="w-full border-dashed"
+                className="w-full h-11 border-dashed"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 参加者を追加
@@ -197,12 +193,12 @@ function NewSessionPage() {
           </section>
 
           {/* Group 3: 詳細設定（折り畳み） */}
-          <details className="group">
-            <summary className="flex items-center justify-between cursor-pointer py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          <details className="group bg-card rounded-2xl border shadow-sm overflow-hidden">
+            <summary className="flex items-center justify-between cursor-pointer px-4 sm:px-5 py-3.5 text-sm font-semibold text-muted-foreground">
               <span>詳細設定</span>
               <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
             </summary>
-            <div className="space-y-4 pt-2 pb-4">
+            <div className="px-4 sm:px-5 pb-4 sm:pb-5 space-y-4 border-t pt-4">
               <div className="space-y-1.5">
                 <Label htmlFor="messageTemplate" className="text-sm">
                   通知メッセージ（任意）
@@ -221,7 +217,7 @@ function NewSessionPage() {
 
               <div className="space-y-1.5">
                 <Label htmlFor="roundingMethod" className="text-sm">
-                  端数処理方法 <span className="text-destructive">*</span>
+                  端数処理方法
                 </Label>
                 <Select
                   value={formData.roundingMethod || 'round_half_up'}
@@ -246,7 +242,7 @@ function NewSessionPage() {
 
               <div className="space-y-1.5">
                 <Label htmlFor="roundingUnit" className="text-sm">
-                  端数処理の位 <span className="text-destructive">*</span>
+                  端数処理の位
                 </Label>
                 <Select
                   value={formData.roundingUnit?.toString() || '0.1'}
@@ -270,7 +266,7 @@ function NewSessionPage() {
                 </Select>
               </div>
 
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 min-h-[44px]">
                 <Checkbox
                   id="attachDetailsLink"
                   checked={formData.attachDetailsLink}
@@ -288,24 +284,27 @@ function NewSessionPage() {
             </div>
           </details>
 
-          {/* Action buttons: sticky bottom */}
-          <div className="sticky bottom-0 bg-background/95 backdrop-blur border-t p-4 -mx-4 mt-6">
-            <div className="flex gap-3">
-              <Button
-                type="submit"
-                disabled={createMutation.isPending}
-                className="flex-1 h-12 text-base font-bold"
-              >
-                {createMutation.isPending ? '作成中...' : '割り勘を作成'}
-              </Button>
-              <Link to="/">
-                <Button type="button" variant="ghost" className="h-12">
-                  戻る
-                </Button>
-              </Link>
-            </div>
-          </div>
+          {/* Sticky bottom CTA */}
+          <div className="h-20" />
         </form>
+
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur border-t pb-[env(safe-area-inset-bottom)]">
+          <div className="max-w-lg sm:max-w-2xl mx-auto flex gap-3 px-5 py-3">
+            <Link to="/" className="shrink-0">
+              <Button type="button" variant="outline" className="h-12 px-5">
+                戻る
+              </Button>
+            </Link>
+            <Button
+              type="submit"
+              disabled={createMutation.isPending}
+              className="flex-1 h-12 text-base font-bold"
+              onClick={handleSubmit as unknown as React.MouseEventHandler}
+            >
+              {createMutation.isPending ? '作成中...' : '割り勘を作成'}
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
