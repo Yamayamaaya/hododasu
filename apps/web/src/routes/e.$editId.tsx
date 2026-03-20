@@ -20,7 +20,29 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from '@/components/ui/drawer';
 import { Plus, Trash2, Send, AlertCircle, Home, ChevronDown } from 'lucide-react';
+import { toast } from 'sonner';
 
 export const Route = createFileRoute('/e/$editId')({
   component: EditSessionPage,
@@ -69,6 +91,7 @@ function EditSessionPage() {
     mutationFn: (data: UpdateSessionRequest) => updateSession(editId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['session', editId] });
+      toast.success('更新しました');
     },
   });
 
@@ -143,15 +166,15 @@ function EditSessionPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentData.title.trim()) {
-      alert('タイトルを入力してください');
+      toast.error('タイトルを入力してください');
       return;
     }
     if (currentData.participants.length === 0) {
-      alert('参加者を1人以上追加してください');
+      toast.error('参加者を1人以上追加してください');
       return;
     }
     if (currentData.participants.some((p) => !p.name.trim())) {
-      alert('参加者の名前を入力してください');
+      toast.error('参加者の名前を入力してください');
       return;
     }
     updateMutation.mutate(currentData as UpdateSessionRequest);
@@ -245,22 +268,42 @@ function EditSessionPage() {
                       </div>
                     )}
                     {!isOrganizer && (
-                      <>
-                        <details>
-                          <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
-                            メッセージを確認
-                          </summary>
-                          <div className="bg-muted/50 rounded-lg p-3 mt-2">
-                            <p className="text-sm whitespace-pre-wrap leading-relaxed">{message}</p>
-                          </div>
-                        </details>
-                        <a href={lineUrl} target="_blank" rel="noopener noreferrer">
+                      <Drawer>
+                        <DrawerTrigger asChild>
                           <Button className="w-full h-11 gap-2 bg-[#06C755] hover:bg-[#05a648] text-white">
                             <Send className="h-4 w-4" />
                             LINEで送る
                           </Button>
-                        </a>
-                      </>
+                        </DrawerTrigger>
+                        <DrawerContent>
+                          <DrawerHeader className="text-left">
+                            <DrawerTitle>{p.name}さんへの送信</DrawerTitle>
+                            <DrawerDescription>
+                              メッセージを確認して送信してください
+                            </DrawerDescription>
+                          </DrawerHeader>
+                          <div className="px-4 pb-2">
+                            <div className="bg-muted/50 rounded-lg p-4">
+                              <p className="text-sm whitespace-pre-wrap leading-relaxed">
+                                {message}
+                              </p>
+                            </div>
+                          </div>
+                          <DrawerFooter>
+                            <a href={lineUrl} target="_blank" rel="noopener noreferrer">
+                              <Button className="w-full h-12 gap-2 bg-[#06C755] hover:bg-[#05a648] text-white text-base font-bold">
+                                <Send className="h-4 w-4" />
+                                LINEで送信する
+                              </Button>
+                            </a>
+                            <DrawerClose asChild>
+                              <Button variant="outline" className="w-full">
+                                キャンセル
+                              </Button>
+                            </DrawerClose>
+                          </DrawerFooter>
+                        </DrawerContent>
+                      </Drawer>
                     )}
                   </div>
                 );
@@ -474,18 +517,34 @@ function EditSessionPage() {
               </Button>
             </form>
 
-            <Button
-              variant="ghost"
-              className="text-destructive text-sm w-full mt-4"
-              onClick={() => {
-                if (confirm('本当に削除しますか？')) {
-                  deleteMutation.mutate();
-                }
-              }}
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending ? '削除中...' : 'セッションを削除'}
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="text-destructive text-sm w-full mt-4"
+                  disabled={deleteMutation.isPending}
+                >
+                  {deleteMutation.isPending ? '削除中...' : 'セッションを削除'}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="max-w-[calc(100%-2rem)] rounded-xl">
+                <AlertDialogHeader>
+                  <AlertDialogTitle>セッションを削除しますか？</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    この操作は取り消せません。割り勘の計算結果と共有リンクがすべて削除されます。
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={() => deleteMutation.mutate()}
+                  >
+                    削除する
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </details>
       </div>

@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Plus, Trash2, ChevronDown } from 'lucide-react';
+import { toast } from 'sonner';
 
 export const Route = createFileRoute('/new')({
   component: NewSessionPage,
@@ -59,15 +60,15 @@ function NewSessionPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title.trim()) {
-      alert('タイトルを入力してください');
+      toast.error('タイトルを入力してください');
       return;
     }
     if (formData.participants.length === 0) {
-      alert('参加者を1人以上追加してください');
+      toast.error('参加者を1人以上追加してください');
       return;
     }
     if (formData.participants.some((p) => !p.name.trim())) {
-      alert('参加者の名前を入力してください');
+      toast.error('参加者の名前を入力してください');
       return;
     }
     createMutation.mutate(formData);
