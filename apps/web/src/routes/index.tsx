@@ -124,14 +124,14 @@ function LandingPage() {
               </span>
             </div>
           </div>
-          <div className="mt-4">
-            <Link to="/how">
-              <Button variant="link" className="text-xs sm:text-sm">
-                計算方法について
-              </Button>
-            </Link>
-          </div>
         </section>
+
+        {/* 計算方法リンク（サービス説明とは別スコープ） */}
+        <Link to="/how">
+          <Button variant="link" className="text-xs sm:text-sm text-muted-foreground">
+            計算方法について
+          </Button>
+        </Link>
       </div>
     </div>
   );
