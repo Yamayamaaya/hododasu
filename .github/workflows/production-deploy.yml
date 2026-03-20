@@ -97,8 +97,6 @@ jobs:
 
       - name: Setup GCloud
         uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
 
       - name: Configure Docker for GCR
         run: gcloud auth configure-docker
@@ -134,7 +132,6 @@ jobs:
             --image "gcr.io/${GCP_PROJECT_ID}/hododasu-api:${COMMIT_SHA}" \
             --region asia-northeast1 \
             --project "${GCP_PROJECT_ID}" \
-            --platform managed \
             --allow-unauthenticated \
             --set-env-vars "^::^DATABASE_URL_POOLED=${PROD_DB_URL_POOLED}::DATABASE_URL_DIRECT=${PROD_DB_URL_DIRECT}" \
             --memory 512Mi \
