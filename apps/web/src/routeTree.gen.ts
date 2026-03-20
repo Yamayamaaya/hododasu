@@ -8,114 +8,114 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root';
-import { Route as NewRouteImport } from './routes/new';
-import { Route as HowRouteImport } from './routes/how';
-import { Route as IndexRouteImport } from './routes/index';
-import { Route as RResultIdRouteImport } from './routes/r.$resultId';
-import { Route as EEditIdRouteImport } from './routes/e.$editId';
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as NewRouteImport } from './routes/new'
+import { Route as HowRouteImport } from './routes/how'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as RResultIdRouteImport } from './routes/r.$resultId'
+import { Route as EEditIdRouteImport } from './routes/e.$editId'
 
 const NewRoute = NewRouteImport.update({
   id: '/new',
   path: '/new',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const HowRoute = HowRouteImport.update({
   id: '/how',
   path: '/how',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const RResultIdRoute = RResultIdRouteImport.update({
   id: '/r/$resultId',
   path: '/r/$resultId',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const EEditIdRoute = EEditIdRouteImport.update({
   id: '/e/$editId',
   path: '/e/$editId',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute;
-  '/how': typeof HowRoute;
-  '/new': typeof NewRoute;
-  '/e/$editId': typeof EEditIdRoute;
-  '/r/$resultId': typeof RResultIdRoute;
+  '/': typeof IndexRoute
+  '/how': typeof HowRoute
+  '/new': typeof NewRoute
+  '/e/$editId': typeof EEditIdRoute
+  '/r/$resultId': typeof RResultIdRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute;
-  '/how': typeof HowRoute;
-  '/new': typeof NewRoute;
-  '/e/$editId': typeof EEditIdRoute;
-  '/r/$resultId': typeof RResultIdRoute;
+  '/': typeof IndexRoute
+  '/how': typeof HowRoute
+  '/new': typeof NewRoute
+  '/e/$editId': typeof EEditIdRoute
+  '/r/$resultId': typeof RResultIdRoute
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport;
-  '/': typeof IndexRoute;
-  '/how': typeof HowRoute;
-  '/new': typeof NewRoute;
-  '/e/$editId': typeof EEditIdRoute;
-  '/r/$resultId': typeof RResultIdRoute;
+  __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
+  '/how': typeof HowRoute
+  '/new': typeof NewRoute
+  '/e/$editId': typeof EEditIdRoute
+  '/r/$resultId': typeof RResultIdRoute
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath;
-  fullPaths: '/' | '/how' | '/new' | '/e/$editId' | '/r/$resultId';
-  fileRoutesByTo: FileRoutesByTo;
-  to: '/' | '/how' | '/new' | '/e/$editId' | '/r/$resultId';
-  id: '__root__' | '/' | '/how' | '/new' | '/e/$editId' | '/r/$resultId';
-  fileRoutesById: FileRoutesById;
+  fileRoutesByFullPath: FileRoutesByFullPath
+  fullPaths: '/' | '/how' | '/new' | '/e/$editId' | '/r/$resultId'
+  fileRoutesByTo: FileRoutesByTo
+  to: '/' | '/how' | '/new' | '/e/$editId' | '/r/$resultId'
+  id: '__root__' | '/' | '/how' | '/new' | '/e/$editId' | '/r/$resultId'
+  fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute;
-  HowRoute: typeof HowRoute;
-  NewRoute: typeof NewRoute;
-  EEditIdRoute: typeof EEditIdRoute;
-  RResultIdRoute: typeof RResultIdRoute;
+  IndexRoute: typeof IndexRoute
+  HowRoute: typeof HowRoute
+  NewRoute: typeof NewRoute
+  EEditIdRoute: typeof EEditIdRoute
+  RResultIdRoute: typeof RResultIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
     '/new': {
-      id: '/new';
-      path: '/new';
-      fullPath: '/new';
-      preLoaderRoute: typeof NewRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
+      id: '/new'
+      path: '/new'
+      fullPath: '/new'
+      preLoaderRoute: typeof NewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/how': {
-      id: '/how';
-      path: '/how';
-      fullPath: '/how';
-      preLoaderRoute: typeof HowRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
+      id: '/how'
+      path: '/how'
+      fullPath: '/how'
+      preLoaderRoute: typeof HowRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
-      id: '/';
-      path: '/';
-      fullPath: '/';
-      preLoaderRoute: typeof IndexRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/r/$resultId': {
-      id: '/r/$resultId';
-      path: '/r/$resultId';
-      fullPath: '/r/$resultId';
-      preLoaderRoute: typeof RResultIdRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
+      id: '/r/$resultId'
+      path: '/r/$resultId'
+      fullPath: '/r/$resultId'
+      preLoaderRoute: typeof RResultIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/e/$editId': {
-      id: '/e/$editId';
-      path: '/e/$editId';
-      fullPath: '/e/$editId';
-      preLoaderRoute: typeof EEditIdRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
+      id: '/e/$editId'
+      path: '/e/$editId'
+      fullPath: '/e/$editId'
+      preLoaderRoute: typeof EEditIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -125,7 +125,7 @@ const rootRouteChildren: RootRouteChildren = {
   NewRoute: NewRoute,
   EEditIdRoute: EEditIdRoute,
   RResultIdRoute: RResultIdRoute,
-};
+}
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>();
+  ._addFileTypes<FileRouteTypes>()
