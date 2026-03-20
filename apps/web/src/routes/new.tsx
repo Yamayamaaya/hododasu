@@ -97,7 +97,7 @@ function NewSessionPage() {
   return (
     <div className="px-5 py-6 sm:py-10">
       <div className="max-w-lg sm:max-w-2xl mx-auto">
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form id="new-form" onSubmit={handleSubmit} className="space-y-5">
           {/* Group 1: 基本情報 */}
           <section className="bg-card rounded-2xl border shadow-sm p-4 sm:p-5 space-y-4">
             <h2 className="text-sm font-semibold text-muted-foreground">基本情報</h2>
@@ -136,9 +136,7 @@ function NewSessionPage() {
 
           {/* Group 2: 参加者 */}
           <section className="bg-card rounded-2xl border shadow-sm p-4 sm:p-5 space-y-3">
-            <h2 className="text-sm font-semibold text-muted-foreground">
-              参加者 <span className="text-destructive">*</span>
-            </h2>
+            <h2 className="text-sm font-semibold text-muted-foreground">参加者</h2>
             <div className="space-y-2">
               {formData.participants.map((p, index) => (
                 <div key={index} className="flex items-center gap-2 bg-muted/40 rounded-xl p-2.5">
@@ -283,13 +281,14 @@ function NewSessionPage() {
               </div>
             </div>
           </details>
-
-          {/* Sticky bottom CTA */}
-          <div className="h-20" />
         </form>
 
+        {/* spacer: form外（sticky barの補償） */}
+        <div className="h-24" />
+
+        {/* Sticky bottom bar */}
         <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur border-t pb-[env(safe-area-inset-bottom)]">
-          <div className="max-w-lg sm:max-w-2xl mx-auto flex gap-3 px-5 py-3">
+          <div className="max-w-lg sm:max-w-2xl mx-auto flex items-center gap-3 px-5 py-3">
             <Link to="/" className="shrink-0">
               <Button type="button" variant="outline" className="h-12 px-5">
                 戻る
@@ -297,9 +296,9 @@ function NewSessionPage() {
             </Link>
             <Button
               type="submit"
+              form="new-form"
               disabled={createMutation.isPending}
               className="flex-1 h-12 text-base font-bold"
-              onClick={handleSubmit as unknown as React.MouseEventHandler}
             >
               {createMutation.isPending ? '作成中...' : '割り勘を作成'}
             </Button>
