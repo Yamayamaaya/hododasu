@@ -228,6 +228,12 @@ function EditSessionPage() {
       <div className="max-w-lg sm:max-w-3xl mx-auto space-y-5">
         {isEditing ? (
           <>
+            {/* 編集モード表示（ページレベル） */}
+            <div className="bg-primary/5 border border-primary/20 rounded-2xl px-4 py-3 flex items-center gap-2">
+              <Pencil className="h-3.5 w-3.5 text-primary" />
+              <span className="text-sm font-medium text-primary">編集モード</span>
+            </div>
+
             {/* 編集フォーム: title/amount + participants を1つのformで包含 */}
             <form id="edit-form" onSubmit={handleSubmit} className="space-y-5">
               {/* 基本情報カード */}
@@ -344,7 +350,7 @@ function EditSessionPage() {
         ) : (
           <>
             {/* ビューモード: ヘッダー */}
-            <div className="bg-card rounded-2xl border shadow-sm p-4 sm:p-5 flex items-start justify-between">
+            <div className="bg-card rounded-2xl border shadow-sm p-4 sm:p-5 space-y-3">
               <div>
                 <h1 className="text-lg sm:text-2xl font-bold">{session.title}</h1>
                 <p className="text-sm text-muted-foreground mt-1">
@@ -354,13 +360,9 @@ function EditSessionPage() {
                   </span>
                 </p>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-11 w-11 shrink-0"
-                onClick={startEditing}
-              >
-                <Pencil className="h-4 w-4" />
+              <Button variant="outline" className="h-10 gap-2 text-sm" onClick={startEditing}>
+                <Pencil className="h-3.5 w-3.5" />
+                内容を編集
               </Button>
             </div>
 
@@ -406,6 +408,15 @@ function EditSessionPage() {
                           {p.shareAmount.toLocaleString()}円
                         </div>
                       </div>
+                      {isOrganizer && session.roundingMethod && session.roundingUnit && (
+                        <div className="text-xs text-muted-foreground bg-muted/50 rounded-lg p-2.5">
+                          {session.roundingMethod === 'round_up'
+                            ? `※ 切り上げにより発生した差額を受け取ります（${formatRoundingDigit(session.roundingUnit)}）`
+                            : session.roundingMethod === 'round_down'
+                              ? `※ 切り下げにより発生した差額を負担します（${formatRoundingDigit(session.roundingUnit)}）`
+                              : `※ 四捨五入により発生した差額を処理します（${formatRoundingDigit(session.roundingUnit)}）`}
+                        </div>
+                      )}
                       {!isOrganizer && (
                         <Drawer>
                           <DrawerTrigger asChild>
@@ -447,16 +458,6 @@ function EditSessionPage() {
                     </div>
                   );
                 })}
-                {/* 端数処理の説明（セッションレベル） */}
-                {session.roundingMethod && session.roundingUnit && (
-                  <div className="text-xs text-muted-foreground bg-muted/50 rounded-xl p-3 mx-1">
-                    {session.roundingMethod === 'round_up'
-                      ? `※ ${formatRoundingDigit(session.roundingUnit)}で切り上げ — 差額は幹事が受け取ります`
-                      : session.roundingMethod === 'round_down'
-                        ? `※ ${formatRoundingDigit(session.roundingUnit)}で切り下げ — 差額は幹事が負担します`
-                        : `※ ${formatRoundingDigit(session.roundingUnit)}で四捨五入 — 差額は幹事が処理します`}
-                  </div>
-                )}
                 {/* 合計 */}
                 <div className="flex justify-between items-center px-1 pt-1 text-base font-bold">
                   <span>合計</span>
@@ -476,11 +477,7 @@ function EditSessionPage() {
       {/* Sticky save bar（編集中ラベルをここに配置 = ページレベル） */}
       {isEditing && (
         <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur border-t pb-[env(safe-area-inset-bottom)]">
-          <div className="max-w-lg sm:max-w-3xl mx-auto flex items-center gap-3 px-5 py-3">
-            <Badge variant="secondary" className="text-xs shrink-0">
-              編集中
-            </Badge>
-            <div className="flex-1" />
+          <div className="max-w-lg sm:max-w-3xl mx-auto flex items-center justify-end gap-3 px-5 py-3">
             <Button variant="outline" className="shrink-0 h-12 px-5" onClick={cancelEditing}>
               キャンセル
             </Button>
