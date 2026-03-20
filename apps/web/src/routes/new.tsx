@@ -17,7 +17,6 @@ import {
 } from '@/components/ui/select';
 import { Plus, Trash2, ChevronDown } from 'lucide-react';
 
-
 export const Route = createFileRoute('/new')({
   component: NewSessionPage,
 });
