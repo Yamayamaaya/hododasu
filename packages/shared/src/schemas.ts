@@ -8,7 +8,7 @@ export const participantSchema = z.object({
 
 // セッション作成・更新用スキーマ
 export const sessionInputSchema = z.object({
-  title: z.string().min(1),
+  title: z.string().trim().min(1),
   totalAmount: z.number().int().min(0),
   participants: z.array(participantSchema).min(1),
   messageTemplate: z.string().optional(),

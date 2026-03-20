@@ -58,6 +58,10 @@ function NewSessionPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.title.trim()) {
+      alert('タイトルを入力してください');
+      return;
+    }
     if (formData.participants.length === 0) {
       alert('参加者を1人以上追加してください');
       return;
@@ -99,7 +103,7 @@ function NewSessionPage() {
             <div className="space-y-3">
               <div className="space-y-1.5">
                 <Label htmlFor="title" className="text-sm">
-                  タイトル（任意）
+                  タイトル <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="title"
@@ -108,6 +112,7 @@ function NewSessionPage() {
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   placeholder="例: 忘年会"
+                  required
                 />
               </div>
               <div className="space-y-1.5">
