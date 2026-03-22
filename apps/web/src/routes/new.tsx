@@ -15,8 +15,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Trash2, ChevronDown, HelpCircle } from 'lucide-react';
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Plus, Trash2, ChevronDown } from 'lucide-react';
+import { HelpTip } from '@/components/ui/help-tip';
+import { WeightChart } from '@/components/WeightChart';
 
 export const Route = createFileRoute('/new')({
   component: NewSessionPage,
@@ -124,19 +125,7 @@ function NewSessionPage() {
 
           {/* Group 2: 参加者 */}
           <section className="bg-card rounded-2xl border shadow-sm p-4 sm:p-5 space-y-3">
-            <div className="flex items-center gap-1.5">
-              <h2 className="text-sm font-semibold text-muted-foreground">参加者</h2>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button type="button" className="text-muted-foreground/60">
-                    <HelpCircle className="h-3.5 w-3.5" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent side="top" className="w-auto px-3 py-1.5 text-sm">
-                  傾斜: 100が基準。200で2倍、50で半額負担
-                </PopoverContent>
-              </Popover>
-            </div>
+            <h2 className="text-sm font-semibold text-muted-foreground">参加者</h2>
             <div className="space-y-2">
               {formData.participants.map((p, index) => (
                 <div key={index} className="flex items-center gap-2 bg-muted/40 rounded-xl p-2.5">
@@ -151,19 +140,30 @@ function NewSessionPage() {
                       required
                     />
                   </div>
-                  <div className="w-20">
-                    <Input
-                      id={`weight-${index}`}
-                      type="number"
-                      min="1"
-                      className="h-11"
-                      placeholder="傾斜"
-                      value={p.weight}
-                      onChange={(e) =>
-                        updateParticipant(index, 'weight', parseInt(e.target.value) || 100)
-                      }
-                      required
-                    />
+                  <div className="flex items-center gap-1">
+                    <div className="w-20">
+                      <Input
+                        id={`weight-${index}`}
+                        type="number"
+                        min="1"
+                        className="h-11"
+                        placeholder="傾斜"
+                        value={p.weight}
+                        onChange={(e) =>
+                          updateParticipant(index, 'weight', parseInt(e.target.value) || 100)
+                        }
+                        required
+                      />
+                    </div>
+                    {index === 0 && (
+                      <HelpTip>
+                        負担割合を数値で指定します。
+                        <br />
+                        全員100なら均等割り。
+                        <br />
+                        200にすると他の人の2倍負担になります。
+                      </HelpTip>
+                    )}
                   </div>
                   {formData.participants.length > 1 && (
                     <Button
@@ -188,6 +188,7 @@ function NewSessionPage() {
                 参加者を追加
               </Button>
             </div>
+            <WeightChart participants={formData.participants} totalAmount={formData.totalAmount} />
           </section>
 
           {/* Group 3: 詳細設定（折り畳み） */}
