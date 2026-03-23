@@ -20,6 +20,9 @@ const COLORS = [
   '#fb923c',
 ];
 
+const ORGANIZER_COLOR = '#9ca3af';
+const ORGANIZER_NAME = '幹事';
+
 interface ChartItem {
   name: string;
   percent: number;
@@ -34,26 +37,34 @@ function buildItems(props: WeightChartProps): ChartItem[] | null {
     if (all.length === 0) return null;
     const positiveTotal = all.filter((p) => p.amount > 0).reduce((sum, p) => sum + p.amount, 0);
     if (positiveTotal === 0) return null;
-    return all.map((p, i) => ({
-      name: p.name,
-      percent: p.amount > 0 ? Math.round((p.amount / positiveTotal) * 100) : 0,
-      amount: p.amount,
-      color: COLORS[i % COLORS.length],
-      legendOnly: p.amount <= 0,
-    }));
+    let colorIndex = 0;
+    return all.map((p) => {
+      const isOrganizer = p.name === ORGANIZER_NAME;
+      const color = isOrganizer ? ORGANIZER_COLOR : COLORS[colorIndex++ % COLORS.length];
+      return {
+        name: p.name,
+        percent: p.amount > 0 ? Math.round((p.amount / positiveTotal) * 1000) / 10 : 0,
+        amount: p.amount,
+        color,
+        legendOnly: p.amount <= 0,
+      };
+    });
   }
 
   const valid = props.participants.filter((p) => p.name.trim());
   if (valid.length === 0) return null;
   const totalWeight = valid.reduce((sum, p) => sum + p.weight, 0);
   if (totalWeight === 0) return null;
-  return valid.map((p, i) => {
+  let colorIndex = 0;
+  return valid.map((p) => {
     const ratio = p.weight / totalWeight;
+    const isOrganizer = p.name === ORGANIZER_NAME;
+    const color = isOrganizer ? ORGANIZER_COLOR : COLORS[colorIndex++ % COLORS.length];
     return {
       name: p.name,
-      percent: Math.round(ratio * 100),
+      percent: Math.round(ratio * 1000) / 10,
       amount: Math.round(props.totalAmount * ratio),
-      color: COLORS[i % COLORS.length],
+      color,
     };
   });
 }
@@ -110,7 +121,9 @@ export function WeightChart(props: WeightChartProps) {
               style={{ backgroundColor: item.color, opacity: 0.4 }}
             />
             <span className="truncate">{item.name}</span>
-            {!item.legendOnly && <span className="tabular-nums shrink-0">{item.percent}%</span>}
+            {!item.legendOnly && (
+              <span className="tabular-nums shrink-0">{item.percent.toFixed(1)}%</span>
+            )}
             {showAmount && (
               <span className="text-foreground font-medium tabular-nums shrink-0">
                 {item.amount.toLocaleString()}円
