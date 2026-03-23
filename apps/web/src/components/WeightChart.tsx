@@ -1,43 +1,67 @@
-interface Participant {
-  name: string;
-  weight: number;
-}
-
-interface WeightChartProps {
-  participants: Participant[];
-  totalAmount: number;
-}
+type WeightChartProps =
+  | {
+      participants: { name: string; weight: number }[];
+      totalAmount: number;
+      mode?: 'weight';
+    }
+  | {
+      participants: { name: string; amount: number }[];
+      mode: 'amount';
+    };
 
 const COLORS = [
-  '#f87171', // red
-  '#60a5fa', // blue
-  '#34d399', // emerald
-  '#fbbf24', // amber
-  '#a78bfa', // violet
-  '#fb7185', // rose
-  '#22d3ee', // cyan
-  '#fb923c', // orange
+  '#f87171',
+  '#60a5fa',
+  '#34d399',
+  '#fbbf24',
+  '#a78bfa',
+  '#fb7185',
+  '#22d3ee',
+  '#fb923c',
 ];
 
-export function WeightChart({ participants, totalAmount }: WeightChartProps) {
-  const validParticipants = participants.filter((p) => p.name.trim());
-  if (validParticipants.length === 0) return null;
+interface ChartItem {
+  name: string;
+  percent: number;
+  amount: number;
+  color: string;
+}
 
-  const totalWeight = validParticipants.reduce((sum, p) => sum + p.weight, 0);
+function buildItems(props: WeightChartProps): ChartItem[] | null {
+  if (props.mode === 'amount') {
+    const valid = props.participants.filter((p) => p.name.trim() && p.amount > 0);
+    if (valid.length === 0) return null;
+    const total = valid.reduce((sum, p) => sum + p.amount, 0);
+    if (total === 0) return null;
+    return valid.map((p, i) => ({
+      name: p.name,
+      percent: Math.round((p.amount / total) * 100),
+      amount: p.amount,
+      color: COLORS[i % COLORS.length],
+    }));
+  }
+
+  const valid = props.participants.filter((p) => p.name.trim());
+  if (valid.length === 0) return null;
+  const totalWeight = valid.reduce((sum, p) => sum + p.weight, 0);
   if (totalWeight === 0) return null;
-
-  const items = validParticipants.map((p, i) => {
+  return valid.map((p, i) => {
     const ratio = p.weight / totalWeight;
-    const amount = totalAmount * ratio;
     return {
       name: p.name,
       percent: Math.round(ratio * 100),
-      amount: Math.round(amount),
+      amount: Math.round(props.totalAmount * ratio),
       color: COLORS[i % COLORS.length],
     };
   });
+}
 
-  // SVG円グラフのパス生成
+export function WeightChart(props: WeightChartProps) {
+  const items = buildItems(props);
+  if (!items) return null;
+
+  const showAmount = props.mode === 'amount' || ('totalAmount' in props && props.totalAmount > 0);
+
   const size = 120;
   const cx = size / 2;
   const cy = size / 2;
@@ -84,7 +108,7 @@ export function WeightChart({ participants, totalAmount }: WeightChartProps) {
             />
             <span className="truncate">{item.name}</span>
             <span className="tabular-nums shrink-0">{item.percent}%</span>
-            {totalAmount > 0 && (
+            {showAmount && (
               <span className="text-foreground font-medium tabular-nums shrink-0">
                 {item.amount.toLocaleString()}円
               </span>

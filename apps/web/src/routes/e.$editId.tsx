@@ -346,6 +346,14 @@ function EditSessionPage() {
             {hasResults && (
               <section className="space-y-3">
                 <h2 className="text-sm font-semibold text-muted-foreground px-1">計算結果</h2>
+                <div className="bg-card rounded-2xl border shadow-sm p-4 sm:p-5">
+                  <WeightChart
+                    mode="amount"
+                    participants={session.participants
+                      .filter((p) => p.shareAmount !== null)
+                      .map((p) => ({ name: p.name, amount: p.shareAmount! }))}
+                  />
+                </div>
                 {session.participants.map((p) => {
                   if (p.shareAmount === null) return null;
                   const isOrganizer = p.name === '幹事';
