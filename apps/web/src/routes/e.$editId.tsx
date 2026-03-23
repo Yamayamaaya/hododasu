@@ -242,7 +242,16 @@ function EditSessionPage() {
               </section>
 
               <section className="bg-card rounded-2xl border shadow-sm p-4 sm:p-5 space-y-3">
-                <h2 className="text-sm font-semibold text-muted-foreground">参加者</h2>
+                <div className="flex items-center gap-1.5">
+                  <h2 className="text-sm font-semibold text-muted-foreground">参加者</h2>
+                  <HelpTip>
+                    「傾斜」は負担割合です。
+                    <br />
+                    全員100なら均等割り。
+                    <br />
+                    200にすると他の人の2倍負担になります。
+                  </HelpTip>
+                </div>
                 <div className="space-y-2">
                   {currentData.participants.map((p, index) => (
                     <div
@@ -260,30 +269,19 @@ function EditSessionPage() {
                           required
                         />
                       </div>
-                      <div className="flex items-center gap-1">
-                        <div className="w-20">
-                          <Input
-                            id={`weight-${index}`}
-                            type="number"
-                            min="1"
-                            className="h-11"
-                            placeholder="傾斜"
-                            value={p.weight}
-                            onChange={(e) =>
-                              updateParticipant(index, 'weight', parseInt(e.target.value) || 100)
-                            }
-                            required
-                          />
-                        </div>
-                        {index === 0 && (
-                          <HelpTip>
-                            負担割合を数値で指定します。
-                            <br />
-                            全員100なら均等割り。
-                            <br />
-                            200にすると他の人の2倍負担になります。
-                          </HelpTip>
-                        )}
+                      <div className="w-20">
+                        <Input
+                          id={`weight-${index}`}
+                          type="number"
+                          min="1"
+                          className="h-11"
+                          placeholder="傾斜"
+                          value={p.weight || ''}
+                          onChange={(e) =>
+                            updateParticipant(index, 'weight', parseInt(e.target.value) || 0)
+                          }
+                          required
+                        />
                       </div>
                       {currentData.participants.length > 1 && (
                         <Button

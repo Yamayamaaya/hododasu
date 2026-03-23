@@ -25,8 +25,6 @@ export function WeightChart({ participants, totalAmount }: WeightChartProps) {
     };
   });
 
-  const maxPercent = Math.max(...items.map((i) => i.percent));
-
   return (
     <div className="space-y-1.5 pt-1">
       {items.map((item, i) => (
@@ -35,7 +33,7 @@ export function WeightChart({ participants, totalAmount }: WeightChartProps) {
           <div className="flex-1 h-5 bg-muted/50 rounded-full overflow-hidden">
             <div
               className="h-full bg-primary/20 rounded-full transition-all duration-300"
-              style={{ width: `${maxPercent > 0 ? (item.percent / maxPercent) * 100 : 0}%` }}
+              style={{ width: `${item.percent}%` }}
             />
           </div>
           <span className="w-24 text-right tabular-nums text-muted-foreground shrink-0">
