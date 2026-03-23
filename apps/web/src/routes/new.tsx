@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { createSession } from '../lib/api';
+import { DEFAULT_MESSAGE_TEMPLATE } from '../lib/line';
 import { roundingUnitFromSelect } from '../lib/rounding';
 import { CreateSessionRequest } from '@hododasu/shared';
 import { Button } from '@/components/ui/button';
@@ -29,7 +30,7 @@ function NewSessionPage() {
     title: '',
     totalAmount: 0,
     participants: [{ name: '', weight: 100 }],
-    messageTemplate: '',
+    messageTemplate: DEFAULT_MESSAGE_TEMPLATE,
     attachDetailsLink: false,
     roundingMethod: 'round_half_up',
     roundingUnit: 0.1,
@@ -184,7 +185,6 @@ function NewSessionPage() {
                 <Textarea
                   id="messageTemplate"
                   rows={3}
-                  placeholder="{name}さん\n「{title}」の割り勘についてお知らせです。"
                   value={formData.messageTemplate}
                   onChange={(e) => setFormData({ ...formData, messageTemplate: e.target.value })}
                 />

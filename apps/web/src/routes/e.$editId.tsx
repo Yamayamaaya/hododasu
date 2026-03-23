@@ -2,7 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getSession, updateSession, deleteSession } from '../lib/api';
-import { buildLineMessage, generateLineUrl } from '../lib/line';
+import { buildLineMessage, generateLineUrl, DEFAULT_MESSAGE_TEMPLATE } from '../lib/line';
 import { addViewHistory } from '../lib/history';
 import { roundingUnitFromSelect } from '../lib/rounding';
 import { SessionInput, UpdateSessionRequest } from '@hododasu/shared';
@@ -147,7 +147,7 @@ function EditSessionPage() {
         name: p.name,
         weight: p.weight,
       })),
-    messageTemplate: session.messageTemplate || '',
+    messageTemplate: session.messageTemplate || DEFAULT_MESSAGE_TEMPLATE,
     attachDetailsLink: session.attachDetailsLink,
     roundingMethod: session.roundingMethod || 'round_half_up',
     roundingUnit: normalizeRoundingUnit(session.roundingUnit),
@@ -358,7 +358,7 @@ function EditSessionPage() {
                   if (p.shareAmount === null) return null;
                   const isOrganizer = p.name === '幹事';
                   const message = buildLineMessage(
-                    session.messageTemplate,
+                    session.messageTemplate || DEFAULT_MESSAGE_TEMPLATE,
                     p.name,
                     p.shareAmount,
                     session.title,
@@ -509,7 +509,6 @@ function EditSessionPage() {
                 <Textarea
                   id="messageTemplate"
                   rows={3}
-                  placeholder="{name}さん\n「{title}」の割り勘についてお知らせです。"
                   value={currentData.messageTemplate}
                   onChange={(e) => setFormData({ ...currentData, messageTemplate: e.target.value })}
                 />
