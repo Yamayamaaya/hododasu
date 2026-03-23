@@ -25,19 +25,21 @@ interface ChartItem {
   percent: number;
   amount: number;
   color: string;
+  legendOnly?: boolean;
 }
 
 function buildItems(props: WeightChartProps): ChartItem[] | null {
   if (props.mode === 'amount') {
-    const valid = props.participants.filter((p) => p.name.trim() && p.amount > 0);
-    if (valid.length === 0) return null;
-    const total = valid.reduce((sum, p) => sum + p.amount, 0);
-    if (total === 0) return null;
-    return valid.map((p, i) => ({
+    const all = props.participants.filter((p) => p.name.trim() && p.amount !== 0);
+    if (all.length === 0) return null;
+    const positiveTotal = all.filter((p) => p.amount > 0).reduce((sum, p) => sum + p.amount, 0);
+    if (positiveTotal === 0) return null;
+    return all.map((p, i) => ({
       name: p.name,
-      percent: Math.round((p.amount / total) * 100),
+      percent: p.amount > 0 ? Math.round((p.amount / positiveTotal) * 100) : 0,
       amount: p.amount,
       color: COLORS[i % COLORS.length],
+      legendOnly: p.amount <= 0,
     }));
   }
 
@@ -61,6 +63,7 @@ export function WeightChart(props: WeightChartProps) {
   if (!items) return null;
 
   const showAmount = props.mode === 'amount' || ('totalAmount' in props && props.totalAmount > 0);
+  const sliceItems = items.filter((item) => !item.legendOnly);
 
   const size = 120;
   const cx = size / 2;
@@ -68,7 +71,7 @@ export function WeightChart(props: WeightChartProps) {
   const r = 48;
 
   let cumulativePercent = 0;
-  const slices = items.map((item) => {
+  const slices = sliceItems.map((item) => {
     const startAngle = cumulativePercent * 3.6 * (Math.PI / 180);
     cumulativePercent += item.percent;
     const endAngle = cumulativePercent * 3.6 * (Math.PI / 180);
@@ -107,7 +110,7 @@ export function WeightChart(props: WeightChartProps) {
               style={{ backgroundColor: item.color, opacity: 0.4 }}
             />
             <span className="truncate">{item.name}</span>
-            <span className="tabular-nums shrink-0">{item.percent}%</span>
+            {!item.legendOnly && <span className="tabular-nums shrink-0">{item.percent}%</span>}
             {showAmount && (
               <span className="text-foreground font-medium tabular-nums shrink-0">
                 {item.amount.toLocaleString()}円
