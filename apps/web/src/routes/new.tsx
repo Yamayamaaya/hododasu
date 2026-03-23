@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { createSession } from '../lib/api';
+import { roundingUnitFromSelect } from '../lib/rounding';
 import { CreateSessionRequest } from '@hododasu/shared';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,23 +23,6 @@ import { WeightChart } from '@/components/WeightChart';
 export const Route = createFileRoute('/new')({
   component: NewSessionPage,
 });
-
-type RoundingUnit = CreateSessionRequest['roundingUnit'];
-
-function roundingUnitFromSelect(value: string): RoundingUnit {
-  switch (value) {
-    case '0.1':
-      return 0.1;
-    case '1':
-      return 1;
-    case '10':
-      return 10;
-    case '100':
-      return 100;
-    default:
-      return 0.1;
-  }
-}
 
 function NewSessionPage() {
   const [formData, setFormData] = useState<CreateSessionRequest>({
@@ -87,7 +71,6 @@ function NewSessionPage() {
     <div className="px-5 py-6 sm:py-10">
       <div className="max-w-lg sm:max-w-2xl mx-auto">
         <form id="new-form" onSubmit={handleSubmit} className="space-y-5">
-          {/* Group 1: 基本情報 */}
           <section className="bg-card rounded-2xl border shadow-sm p-4 sm:p-5 space-y-4">
             <h2 className="text-sm font-semibold text-muted-foreground">基本情報</h2>
             <div className="space-y-1.5">
@@ -123,7 +106,6 @@ function NewSessionPage() {
             </div>
           </section>
 
-          {/* Group 2: 参加者 */}
           <section className="bg-card rounded-2xl border shadow-sm p-4 sm:p-5 space-y-3">
             <h2 className="text-sm font-semibold text-muted-foreground">参加者</h2>
             <div className="space-y-2">
@@ -191,7 +173,6 @@ function NewSessionPage() {
             <WeightChart participants={formData.participants} totalAmount={formData.totalAmount} />
           </section>
 
-          {/* Group 3: 詳細設定（折り畳み） */}
           <details className="group bg-card rounded-2xl border shadow-sm overflow-hidden">
             <summary className="flex items-center justify-between cursor-pointer px-4 sm:px-5 py-3.5 text-sm font-semibold text-muted-foreground">
               <span>詳細設定</span>
@@ -219,7 +200,7 @@ function NewSessionPage() {
                   端数処理方法
                 </Label>
                 <Select
-                  value={formData.roundingMethod || 'round_half_up'}
+                  value={formData.roundingMethod}
                   onValueChange={(value) =>
                     setFormData({
                       ...formData,
@@ -244,7 +225,7 @@ function NewSessionPage() {
                   端数処理の位
                 </Label>
                 <Select
-                  value={formData.roundingUnit?.toString() || '0.1'}
+                  value={formData.roundingUnit.toString()}
                   onValueChange={(value) =>
                     setFormData({
                       ...formData,
@@ -284,10 +265,8 @@ function NewSessionPage() {
           </details>
         </form>
 
-        {/* spacer: form外（sticky barの補償） */}
         <div className="h-24" />
 
-        {/* Sticky bottom bar */}
         <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur border-t pb-[env(safe-area-inset-bottom)]">
           <div className="max-w-lg sm:max-w-2xl mx-auto flex items-center gap-3 px-5 py-3">
             <Link to="/" className="shrink-0">

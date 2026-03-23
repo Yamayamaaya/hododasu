@@ -39,7 +39,6 @@ function LandingPage() {
   return (
     <div className="px-5 py-6 sm:py-10">
       <div className="text-center max-w-lg sm:max-w-2xl mx-auto w-full space-y-8">
-        {/* Hero: CTA */}
         <section className="space-y-5 py-4 sm:py-8">
           <div className="flex justify-center">
             <img src="/logo.png" alt="ホドダス" className="h-12 sm:h-16 md:h-20 object-contain" />
@@ -54,7 +53,6 @@ function LandingPage() {
           </div>
         </section>
 
-        {/* 履歴（リピーター向け） */}
         {history.length > 0 && (
           <section className="text-left">
             <h2 className="text-sm font-semibold text-muted-foreground mb-3">最近の割り勘</h2>
@@ -82,7 +80,6 @@ function LandingPage() {
           </section>
         )}
 
-        {/* サービス説明（初見向け） */}
         <section className="bg-card rounded-2xl border shadow-sm p-5 sm:p-6 text-center">
           <h2 className="text-base sm:text-lg font-bold mb-1">
             割り勘の計算と連絡、もっと手軽に。

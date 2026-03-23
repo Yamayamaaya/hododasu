@@ -38,7 +38,7 @@ export function WeightChart({ participants, totalAmount }: WeightChartProps) {
               style={{ width: `${maxPercent > 0 ? (item.percent / maxPercent) * 100 : 0}%` }}
             />
           </div>
-          <span className="w-[4.5rem] text-right tabular-nums text-muted-foreground shrink-0">
+          <span className="w-24 text-right tabular-nums text-muted-foreground shrink-0">
             {item.percent}%
             {totalAmount > 0 && (
               <span className="text-foreground font-medium"> {item.amount.toLocaleString()}</span>

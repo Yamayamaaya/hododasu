@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getSession, updateSession, deleteSession } from '../lib/api';
 import { buildLineMessage, generateLineUrl } from '../lib/line';
 import { addViewHistory } from '../lib/history';
+import { roundingUnitFromSelect } from '../lib/rounding';
 import { SessionInput, UpdateSessionRequest } from '@hododasu/shared';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -63,21 +64,6 @@ type RoundingUnit = SessionInput['roundingUnit'];
 function normalizeRoundingUnit(value: unknown): RoundingUnit {
   if (value === 0.1 || value === 1 || value === 10 || value === 100) return value;
   return 0.1;
-}
-
-function roundingUnitFromSelect(value: string): RoundingUnit {
-  switch (value) {
-    case '0.1':
-      return 0.1;
-    case '1':
-      return 1;
-    case '10':
-      return 10;
-    case '100':
-      return 100;
-    default:
-      return 0.1;
-  }
 }
 
 function EditSessionPage() {
@@ -218,9 +204,7 @@ function EditSessionPage() {
       <div className="max-w-lg sm:max-w-3xl mx-auto space-y-5">
         {isEditing ? (
           <>
-            {/* 編集フォーム: title/amount + participants を1つのformで包含 */}
             <form id="edit-form" onSubmit={handleSubmit} className="space-y-5">
-              {/* 基本情報カード */}
               <section className="bg-card rounded-2xl border shadow-sm p-4 sm:p-5 space-y-4">
                 <h2 className="text-sm font-semibold text-muted-foreground">基本情報</h2>
                 <div className="space-y-1.5">
@@ -257,7 +241,6 @@ function EditSessionPage() {
                 </div>
               </section>
 
-              {/* 参加者カード */}
               <section className="bg-card rounded-2xl border shadow-sm p-4 sm:p-5 space-y-3">
                 <h2 className="text-sm font-semibold text-muted-foreground">参加者</h2>
                 <div className="space-y-2">
@@ -331,7 +314,6 @@ function EditSessionPage() {
                 />
               </section>
 
-              {/* 詳細設定ボタン */}
               <Button
                 type="button"
                 variant="outline"
@@ -343,12 +325,10 @@ function EditSessionPage() {
               </Button>
             </form>
 
-            {/* spacer: form外（sticky barの補償） */}
             <div className="h-24" />
           </>
         ) : (
           <>
-            {/* ビューモード: ヘッダー */}
             <div className="bg-card rounded-2xl border shadow-sm p-4 sm:p-5 space-y-3">
               <div>
                 <h1 className="text-lg sm:text-2xl font-bold">{session.title}</h1>
@@ -365,7 +345,6 @@ function EditSessionPage() {
               </Button>
             </div>
 
-            {/* ビューモード: 計算結果（参加者ごとに独立カード） */}
             {hasResults && (
               <section className="space-y-3">
                 <h2 className="text-sm font-semibold text-muted-foreground px-1">計算結果</h2>
@@ -471,7 +450,6 @@ function EditSessionPage() {
                     </div>
                   );
                 })}
-                {/* 合計 */}
                 <div className="flex justify-between items-center px-1 pt-1 text-base font-bold">
                   <span>合計</span>
                   <span className="text-primary text-lg">
@@ -487,7 +465,6 @@ function EditSessionPage() {
         )}
       </div>
 
-      {/* Sticky save bar（編集中ラベルをここに配置 = ページレベル） */}
       {isEditing && (
         <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur border-t pb-[env(safe-area-inset-bottom)]">
           <div className="max-w-lg sm:max-w-3xl mx-auto flex items-center gap-3 px-5 py-3">
@@ -511,7 +488,6 @@ function EditSessionPage() {
         </div>
       )}
 
-      {/* 詳細設定 + 削除Drawer（form外・セッション管理レベル） */}
       {isEditing && (
         <Drawer open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
           <DrawerContent>
@@ -541,7 +517,7 @@ function EditSessionPage() {
                   端数処理方法
                 </Label>
                 <Select
-                  value={currentData.roundingMethod || 'round_half_up'}
+                  value={currentData.roundingMethod}
                   onValueChange={(value) =>
                     setFormData({
                       ...currentData,
@@ -565,7 +541,7 @@ function EditSessionPage() {
                   端数処理の位
                 </Label>
                 <Select
-                  value={currentData.roundingUnit?.toString() || '0.1'}
+                  value={currentData.roundingUnit.toString()}
                   onValueChange={(value) =>
                     setFormData({
                       ...currentData,
@@ -601,7 +577,6 @@ function EditSessionPage() {
                 </Label>
               </div>
 
-              {/* 削除: セッション管理アクション（form外・Drawer内で目立たせない） */}
               <div className="border-t pt-4 mt-2">
                 <AlertDialog>
                   <AlertDialogTrigger asChild>

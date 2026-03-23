@@ -1,6 +1,3 @@
-/**
- * LINE送信用の本文を組み立て
- */
 export function buildLineMessage(
   messageTemplate: string | null,
   participantName: string,
@@ -14,7 +11,6 @@ export function buildLineMessage(
   const lines: string[] = [];
 
   if (messageTemplate) {
-    // カスタムテンプレート（置換後）
     const replaced = messageTemplate
       .replace(/{name}/g, participantName)
       .replace(/{amount}/g, shareAmount.toLocaleString())
@@ -22,23 +18,19 @@ export function buildLineMessage(
       .replace(/{total}/g, totalAmount.toLocaleString());
     lines.push(replaced);
   } else {
-    // デフォルトメッセージ
     lines.push(`${participantName}さん`);
     if (title) {
       lines.push(`「${title}」の割り勘についてお知らせです。`);
     }
   }
 
-  // 金額行（必須）
   lines.push(
     `\n負担額: ${shareAmount.toLocaleString()}円（合計 ${totalAmount.toLocaleString()}円）`
   );
 
-  // 結果画面のリンク（常に追加）
   const resultUrl = `${baseUrl}/r/${resultId}`;
   lines.push(`\n詳細はこちら: ${resultUrl}`);
 
-  // 計算方法の説明リンク（オプション）
   if (attachDetailsLink) {
     const howUrl = `${baseUrl}/how`;
     lines.push(`\n計算方法: ${howUrl}`);
@@ -47,9 +39,6 @@ export function buildLineMessage(
   return lines.join('\n');
 }
 
-/**
- * LINE送信URLを生成
- */
 export function generateLineUrl(message: string): string {
   const encoded = encodeURIComponent(message);
   return `https://line.me/R/msg/text/?${encoded}`;
