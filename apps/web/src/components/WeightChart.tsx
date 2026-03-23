@@ -25,6 +25,7 @@ const ORGANIZER_NAME = '幹事';
 
 interface ChartItem {
   name: string;
+  ratio: number;
   percent: number;
   amount: number;
   color: string;
@@ -41,9 +42,11 @@ function buildItems(props: WeightChartProps): ChartItem[] | null {
     return all.map((p) => {
       const isOrganizer = p.name === ORGANIZER_NAME;
       const color = isOrganizer ? ORGANIZER_COLOR : COLORS[colorIndex++ % COLORS.length];
+      const ratio = p.amount > 0 ? p.amount / positiveTotal : 0;
       return {
         name: p.name,
-        percent: p.amount > 0 ? Math.round((p.amount / positiveTotal) * 1000) / 10 : 0,
+        ratio,
+        percent: Math.round(ratio * 1000) / 10,
         amount: p.amount,
         color,
         legendOnly: p.amount <= 0,
@@ -62,6 +65,7 @@ function buildItems(props: WeightChartProps): ChartItem[] | null {
     const color = isOrganizer ? ORGANIZER_COLOR : COLORS[colorIndex++ % COLORS.length];
     return {
       name: p.name,
+      ratio,
       percent: Math.round(ratio * 1000) / 10,
       amount: Math.round(props.totalAmount * ratio),
       color,
@@ -81,13 +85,13 @@ export function WeightChart(props: WeightChartProps) {
   const cy = size / 2;
   const r = 48;
 
-  let cumulativePercent = 0;
+  let cumulativeRatio = 0;
   const slices = sliceItems.map((item) => {
-    const startAngle = cumulativePercent * 3.6 * (Math.PI / 180);
-    cumulativePercent += item.percent;
-    const endAngle = cumulativePercent * 3.6 * (Math.PI / 180);
+    const startAngle = cumulativeRatio * 2 * Math.PI;
+    cumulativeRatio += item.ratio;
+    const endAngle = cumulativeRatio * 2 * Math.PI;
 
-    if (item.percent >= 100) {
+    if (item.ratio >= 1) {
       return {
         ...item,
         d: `M ${cx},${cy - r} A ${r},${r} 0 1,1 ${cx},${cy + r} A ${r},${r} 0 1,1 ${cx},${cy - r} Z`,
@@ -98,7 +102,7 @@ export function WeightChart(props: WeightChartProps) {
     const y1 = cy - r * Math.cos(startAngle);
     const x2 = cx + r * Math.sin(endAngle);
     const y2 = cy - r * Math.cos(endAngle);
-    const largeArc = item.percent > 50 ? 1 : 0;
+    const largeArc = item.ratio > 0.5 ? 1 : 0;
 
     return {
       ...item,
