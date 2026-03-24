@@ -11,8 +11,9 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY turbo.json tsconfig.json ./
 
-# 各パッケージのpackage.jsonをコピー
+# 各パッケージのpackage.jsonをコピー（pnpm workspaceの解決に全パッケージ必要）
 COPY apps/api/package.json ./apps/api/
+COPY apps/web/package.json ./apps/web/
 COPY packages/shared/package.json ./packages/shared/
 
 # 依存関係をインストール（ルートで1回）
