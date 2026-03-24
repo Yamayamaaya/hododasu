@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { ClipboardList, Calculator, Send, ChevronRight } from 'lucide-react';
 import { getViewHistory, ViewHistory } from '../lib/history';
 
 export const Route = createFileRoute('/')({
@@ -36,71 +37,96 @@ function LandingPage() {
   };
 
   return (
-    <div className="flex items-center justify-center px-3 sm:px-4 py-4 sm:py-8 bg-gradient-to-br from-background to-muted/20">
-      <div className="text-center max-w-2xl mx-auto w-full space-y-4 sm:space-y-6">
-        <Card className="border-0 shadow-lg">
-          <CardHeader className="space-y-3 sm:space-y-4 pb-4 sm:pb-6">
-            <div className="flex justify-center mb-2 sm:mb-4">
-              <img src="/logo.png" alt="ホドダス" className="h-16 sm:h-24 md:h-32 object-contain" />
-            </div>
-            <CardDescription className="text-sm sm:text-lg md:text-xl text-muted-foreground px-2">
-              傾斜付き割り勘を簡単に計算し、LINEで個別送信
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 sm:space-y-4">
+    <div className="px-5 py-6 sm:py-10">
+      <div className="text-center max-w-lg sm:max-w-2xl mx-auto w-full space-y-8">
+        <section className="space-y-5 py-4 sm:py-8">
+          <div className="flex justify-center">
+            <img src="/logo.png" alt="ホドダス" className="h-12 sm:h-16 md:h-20 object-contain" />
+          </div>
+          <p className="text-sm text-muted-foreground">傾斜付き割り勘 &amp; LINE送信</p>
+          <div className="sm:max-w-xs sm:mx-auto">
             <Link to="/new" className="block">
-              <Button
-                size="lg"
-                className="w-full sm:w-auto text-sm sm:text-lg px-6 sm:px-8 py-4 sm:py-6"
-              >
-                新規作成
+              <Button size="lg" className="w-full h-14 text-base font-bold rounded-xl shadow-md">
+                割り勘を計算する
               </Button>
             </Link>
-            <div className="pt-3 sm:pt-4">
-              <Link to="/how">
-                <Button variant="link" className="text-xs sm:text-base">
-                  計算方法について
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        </section>
 
         {history.length > 0 && (
-          <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-xl sm:text-2xl">最近の閲覧</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-left">
-                {history.map((item) => (
-                  <li key={`${item.type}-${item.id}`}>
-                    <Link
-                      to={item.path}
-                      className="block p-3 rounded-lg hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-xs text-muted-foreground">
-                              {item.type === 'edit' ? '編集' : '結果'}
-                            </span>
-                            <span className="text-sm sm:text-base font-medium truncate">
-                              {item.title}
-                            </span>
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {formatDate(item.timestamp)}
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
+          <section className="text-left">
+            <h2 className="text-sm font-semibold text-muted-foreground mb-3">最近の割り勘</h2>
+            <div className="bg-card rounded-2xl border shadow-sm overflow-hidden divide-y">
+              {history.map((item) => (
+                <Link
+                  key={`${item.type}-${item.id}`}
+                  to={item.path}
+                  className="flex items-center gap-3 px-4 py-3.5 min-h-[52px] hover:bg-muted/50 active:bg-muted transition-colors"
+                >
+                  <Badge
+                    variant={item.type === 'edit' ? 'default' : 'secondary'}
+                    className="text-[10px] shrink-0"
+                  >
+                    {item.type === 'edit' ? '編集' : '結果'}
+                  </Badge>
+                  <span className="text-sm font-medium truncate flex-1">{item.title}</span>
+                  <span className="text-xs text-muted-foreground shrink-0">
+                    {formatDate(item.timestamp)}
+                  </span>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+                </Link>
+              ))}
+            </div>
+          </section>
         )}
+
+        <section className="bg-card rounded-2xl border shadow-sm p-5 sm:p-6 text-center">
+          <h2 className="text-base sm:text-lg font-bold mb-1">
+            割り勘の計算と連絡、もっと手軽に。
+          </h2>
+          <p className="text-xs sm:text-sm text-muted-foreground mb-5">
+            均等割りはもちろん、負担多め・少なめもOK。
+            <br className="hidden sm:inline" />
+            計算結果はLINEで一人ずつ送れます。
+          </p>
+          <div className="grid grid-cols-3 gap-4 sm:gap-6">
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex items-center justify-center w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-primary/10 text-primary">
+                <ClipboardList className="w-5 h-5 sm:w-6 sm:h-6" />
+              </div>
+              <span className="text-[11px] sm:text-sm font-medium leading-tight">
+                金額/参加者を
+                <br />
+                入力
+              </span>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex items-center justify-center w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-primary/10 text-primary">
+                <Calculator className="w-5 h-5 sm:w-6 sm:h-6" />
+              </div>
+              <span className="text-[11px] sm:text-sm font-medium leading-tight">
+                自動で
+                <br />
+                計算
+              </span>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex items-center justify-center w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-primary/10 text-primary">
+                <Send className="w-5 h-5 sm:w-6 sm:h-6" />
+              </div>
+              <span className="text-[11px] sm:text-sm font-medium leading-tight">
+                LINEで
+                <br />
+                個別送信
+              </span>
+            </div>
+          </div>
+          <Link to="/how" className="mt-4 inline-block">
+            <Button variant="link" className="text-xs sm:text-sm text-muted-foreground">
+              計算方法について
+            </Button>
+          </Link>
+        </section>
       </div>
     </div>
   );
