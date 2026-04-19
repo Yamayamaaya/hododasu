@@ -56,12 +56,12 @@ function LandingPage() {
         {history.length > 0 && (
           <section className="text-left">
             <h2 className="text-sm font-semibold text-muted-foreground mb-3">最近の割り勘</h2>
-            <div className="bg-card rounded-2xl border shadow-sm overflow-hidden divide-y">
-              {history.map((item) => (
+            <div className="bg-card rounded-2xl shadow-sm overflow-hidden">
+              {history.map((item, index) => (
                 <Link
                   key={`${item.type}-${item.id}`}
                   to={item.path}
-                  className="flex items-center gap-3 px-4 py-3.5 min-h-[52px] hover:bg-muted/50 active:bg-muted transition-colors"
+                  className={`flex items-center gap-3 px-4 py-3.5 min-h-[52px] hover:bg-muted/50 active:bg-muted transition-colors ${index > 0 ? 'border-t border-muted/60' : ''}`}
                 >
                   <Badge
                     variant={item.type === 'edit' ? 'default' : 'secondary'}
@@ -80,7 +80,7 @@ function LandingPage() {
           </section>
         )}
 
-        <section className="bg-card rounded-2xl border shadow-sm p-5 sm:p-6 text-center">
+        <section className="bg-card rounded-2xl shadow-sm p-5 sm:p-6 text-center">
           <h2 className="text-base sm:text-lg font-bold mb-1">
             割り勘の計算と連絡、もっと手軽に。
           </h2>

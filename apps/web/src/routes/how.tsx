@@ -18,7 +18,7 @@ function HowPage() {
           </Button>
         </Link>
 
-        <Card className="shadow-lg border-0">
+        <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="text-2xl sm:text-4xl">計算方法について</CardTitle>
           </CardHeader>

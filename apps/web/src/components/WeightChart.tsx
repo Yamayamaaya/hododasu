@@ -10,17 +10,17 @@ type WeightChartProps =
     };
 
 const COLORS = [
-  '#f87171',
-  '#60a5fa',
-  '#34d399',
-  '#fbbf24',
-  '#a78bfa',
-  '#fb7185',
-  '#22d3ee',
-  '#fb923c',
+  '#e8b89d',
+  '#a3c4d9',
+  '#a8cfb5',
+  '#e8d49c',
+  '#c4b5d8',
+  '#dfa8b2',
+  '#9dc5c8',
+  '#e8c09d',
 ];
 
-const ORGANIZER_COLOR = '#9ca3af';
+const ORGANIZER_COLOR = '#c5c0b8';
 const ORGANIZER_NAME = '幹事';
 
 interface ChartItem {
@@ -114,7 +114,7 @@ export function WeightChart(props: WeightChartProps) {
     <div className="flex items-center gap-4 pt-1">
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0">
         {slices.map((slice, i) => (
-          <path key={i} d={slice.d} fill={slice.color} opacity={0.4} />
+          <path key={i} d={slice.d} fill={slice.color} opacity={0.7} />
         ))}
       </svg>
       <div className="flex flex-col gap-0.5 text-xs text-muted-foreground min-w-0">

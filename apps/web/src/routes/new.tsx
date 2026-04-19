@@ -72,7 +72,7 @@ function NewSessionPage() {
     <div className="px-5 py-6 sm:py-10">
       <div className="max-w-lg sm:max-w-2xl mx-auto">
         <form id="new-form" onSubmit={handleSubmit} className="space-y-5">
-          <section className="bg-card rounded-2xl border shadow-sm p-4 sm:p-5 space-y-4">
+          <section className="bg-card rounded-2xl shadow-sm p-4 sm:p-5 space-y-4">
             <h2 className="text-sm font-semibold text-muted-foreground">基本情報</h2>
             <div className="space-y-1.5">
               <Label htmlFor="title" className="text-sm">
@@ -107,7 +107,7 @@ function NewSessionPage() {
             </div>
           </section>
 
-          <section className="bg-card rounded-2xl border shadow-sm p-4 sm:p-5 space-y-3">
+          <section className="bg-card rounded-2xl shadow-sm p-4 sm:p-5 space-y-3">
             <div className="flex items-center gap-1.5">
               <h2 className="text-sm font-semibold text-muted-foreground">参加者</h2>
               <HelpTip>
@@ -163,7 +163,7 @@ function NewSessionPage() {
                 type="button"
                 variant="outline"
                 onClick={addParticipant}
-                className="w-full h-11 border-dashed"
+                className="w-full h-11"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 参加者を追加
@@ -172,12 +172,12 @@ function NewSessionPage() {
             <WeightChart participants={formData.participants} totalAmount={formData.totalAmount} />
           </section>
 
-          <details className="group bg-card rounded-2xl border shadow-sm overflow-hidden">
+          <details className="group bg-card rounded-2xl shadow-sm overflow-hidden">
             <summary className="flex items-center justify-between cursor-pointer px-4 sm:px-5 py-3.5 text-sm font-semibold text-muted-foreground">
               <span>詳細設定</span>
               <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
             </summary>
-            <div className="px-4 sm:px-5 pb-4 sm:pb-5 space-y-4 border-t pt-4">
+            <div className="px-4 sm:px-5 pb-4 sm:pb-5 space-y-4 pt-4">
               <div className="space-y-1.5">
                 <Label htmlFor="messageTemplate" className="text-sm">
                   通知メッセージ（任意）
@@ -265,7 +265,7 @@ function NewSessionPage() {
 
         <div className="h-24" />
 
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur border-t pb-[env(safe-area-inset-bottom)]">
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur pb-[env(safe-area-inset-bottom)]">
           <div className="max-w-lg sm:max-w-2xl mx-auto flex items-center gap-3 px-5 py-3">
             <Link to="/" className="shrink-0">
               <Button type="button" variant="outline" className="h-12 px-5">

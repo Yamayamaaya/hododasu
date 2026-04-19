@@ -2,7 +2,7 @@ import { Link } from '@tanstack/react-router';
 
 export function Footer() {
   return (
-    <footer className="border-t bg-background pb-[env(safe-area-inset-bottom)]">
+    <footer className="bg-background pb-[env(safe-area-inset-bottom)]">
       <div className="container mx-auto px-5 sm:px-6 lg:px-8 py-4 sm:py-8">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="hidden sm:flex items-center">

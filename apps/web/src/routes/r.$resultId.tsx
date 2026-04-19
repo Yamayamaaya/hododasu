@@ -80,7 +80,7 @@ function ResultPage() {
     <div className="px-5 py-6 sm:py-10">
       <div className="max-w-lg sm:max-w-3xl mx-auto space-y-5">
         {/* Session header card */}
-        <div className="bg-card rounded-2xl border shadow-sm p-4 sm:p-5">
+        <div className="bg-card rounded-2xl shadow-sm p-4 sm:p-5">
           <h1 className="text-lg sm:text-2xl font-bold">{session.title || '無題のセッション'}</h1>
           <p className="text-sm text-muted-foreground mt-1">
             合計:{' '}
@@ -91,11 +91,11 @@ function ResultPage() {
         </div>
 
         {hasResults ? (
-          <section className="bg-card rounded-2xl border shadow-sm overflow-hidden">
+          <section className="bg-card rounded-2xl shadow-sm overflow-hidden">
             <div className="px-4 sm:px-5 pt-4 sm:pt-5 pb-2">
               <h2 className="text-sm font-semibold text-muted-foreground">計算結果</h2>
             </div>
-            <div className="divide-y">
+            <div>
               {session.participants.map((p) => {
                 if (p.shareAmount === null) return null;
                 const isOrganizer = p.name === '幹事';
@@ -133,13 +133,13 @@ function ResultPage() {
               })}
             </div>
             {/* 合計 footer */}
-            <div className="flex justify-between items-center px-4 sm:px-5 py-3.5 bg-muted/30 border-t text-base font-bold">
+            <div className="flex justify-between items-center px-4 sm:px-5 py-3.5 bg-muted/30 text-base font-bold">
               <span>合計</span>
               <span className="text-primary text-lg">{totalShare.toLocaleString()}円</span>
             </div>
           </section>
         ) : (
-          <div className="bg-card rounded-2xl border shadow-sm p-8 text-center text-sm text-muted-foreground">
+          <div className="bg-card rounded-2xl shadow-sm p-8 text-center text-sm text-muted-foreground">
             計算結果がまだありません
           </div>
         )}

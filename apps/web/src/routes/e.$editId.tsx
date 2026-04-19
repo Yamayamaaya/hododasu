@@ -205,7 +205,7 @@ function EditSessionPage() {
         {isEditing ? (
           <>
             <form id="edit-form" onSubmit={handleSubmit} className="space-y-5">
-              <section className="bg-card rounded-2xl border shadow-sm p-4 sm:p-5 space-y-4">
+              <section className="bg-card rounded-2xl shadow-sm p-4 sm:p-5 space-y-4">
                 <h2 className="text-sm font-semibold text-muted-foreground">基本情報</h2>
                 <div className="space-y-1.5">
                   <Label htmlFor="title" className="text-sm">
@@ -241,7 +241,7 @@ function EditSessionPage() {
                 </div>
               </section>
 
-              <section className="bg-card rounded-2xl border shadow-sm p-4 sm:p-5 space-y-3">
+              <section className="bg-card rounded-2xl shadow-sm p-4 sm:p-5 space-y-3">
                 <div className="flex items-center gap-1.5">
                   <h2 className="text-sm font-semibold text-muted-foreground">参加者</h2>
                   <HelpTip>
@@ -300,7 +300,7 @@ function EditSessionPage() {
                     type="button"
                     variant="outline"
                     onClick={addParticipant}
-                    className="w-full h-11 border-dashed"
+                    className="w-full h-11"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     参加者を追加
@@ -327,7 +327,7 @@ function EditSessionPage() {
           </>
         ) : (
           <>
-            <div className="bg-card rounded-2xl border shadow-sm p-4 sm:p-5 space-y-3">
+            <div className="bg-card rounded-2xl shadow-sm p-4 sm:p-5 space-y-3">
               <div>
                 <h1 className="text-lg sm:text-2xl font-bold">{session.title}</h1>
                 <p className="text-sm text-muted-foreground mt-1">
@@ -372,7 +372,7 @@ function EditSessionPage() {
                   return (
                     <div
                       key={p.id}
-                      className="bg-card rounded-2xl border shadow-sm p-4 sm:p-5 space-y-3"
+                      className="bg-card rounded-2xl shadow-sm p-4 sm:p-5 space-y-3"
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
@@ -472,7 +472,7 @@ function EditSessionPage() {
       </div>
 
       {isEditing && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur border-t pb-[env(safe-area-inset-bottom)]">
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur pb-[env(safe-area-inset-bottom)]">
           <div className="max-w-lg sm:max-w-3xl mx-auto flex items-center gap-3 px-5 py-3">
             <div className="flex items-center gap-1.5 shrink-0 text-primary">
               <Pencil className="h-3.5 w-3.5" />
@@ -582,7 +582,7 @@ function EditSessionPage() {
                 </Label>
               </div>
 
-              <div className="border-t pt-4 mt-2">
+              <div className="pt-4 mt-2">
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button
