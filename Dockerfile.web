@@ -23,6 +23,10 @@ RUN pnpm install --frozen-lockfile
 COPY apps/web ./apps/web
 COPY packages/shared ./packages/shared
 
+# エントリポイント（起動時に依存関係を同期）
+COPY docker-entrypoint.dev.sh /usr/local/bin/
+ENTRYPOINT ["docker-entrypoint.dev.sh"]
+
 # 作業ディレクトリはルートのまま（pnpm workspaceのため）
 # 開発サーバーを起動（Vite）
 CMD ["pnpm", "--filter", "web", "dev"]
