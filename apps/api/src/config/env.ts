@@ -12,6 +12,10 @@ export const env = {
   PORT: Number(process.env.PORT) || 8787,
   DATABASE_URL_POOLED: process.env.DATABASE_URL_POOLED || '',
   DATABASE_URL_DIRECT: process.env.DATABASE_URL_DIRECT || '',
+  SENTRY_DSN: process.env.SENTRY_DSN || '',
+  SENTRY_ENVIRONMENT: process.env.SENTRY_ENVIRONMENT || 'local',
+  SENTRY_RELEASE: process.env.SENTRY_RELEASE || '',
+  SENTRY_TRACES_SAMPLE_RATE: Number(process.env.SENTRY_TRACES_SAMPLE_RATE) || 0,
 } as const;
 
 // 必須環境変数の検証

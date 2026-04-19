@@ -89,6 +89,14 @@ jobs:
 
       - name: Build
         run: pnpm build
+        env:
+          VITE_SENTRY_DSN: ${{ secrets.SENTRY_WEB_DSN }}
+          VITE_SENTRY_ENVIRONMENT: production
+          VITE_SENTRY_RELEASE: ${{ github.sha }}
+          VITE_SENTRY_TRACES_SAMPLE_RATE: '0.5'
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT_WEB: ${{ vars.SENTRY_PROJECT_WEB }}
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -133,7 +141,7 @@ jobs:
             --region asia-northeast1 \
             --project "${GCP_PROJECT_ID}" \
             --allow-unauthenticated \
-            --set-env-vars "^::^DATABASE_URL_POOLED=${PROD_DB_URL_POOLED}::DATABASE_URL_DIRECT=${PROD_DB_URL_DIRECT}" \
+            --set-env-vars "^::^DATABASE_URL_POOLED=${PROD_DB_URL_POOLED}::DATABASE_URL_DIRECT=${PROD_DB_URL_DIRECT}::SENTRY_DSN=${{ secrets.SENTRY_API_DSN }}::SENTRY_ENVIRONMENT=production::SENTRY_RELEASE=${COMMIT_SHA}::SENTRY_TRACES_SAMPLE_RATE=0.5" \
             --memory 512Mi \
             --cpu 1 \
             --max-instances 10 \
