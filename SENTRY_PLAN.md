@@ -196,14 +196,14 @@
 
 ### Secret → 環境変数の対応表
 
-| 保管場所 | Secret / Variable 名 | 渡す先の環境変数名 | 用途 |
-|---|---|---|---|
-| GCP Secret Manager | `SENTRY_API_DSN` | Cloud Run の `SENTRY_DSN` | API runtime |
-| GitHub Secrets | `SENTRY_WEB_DSN` | Vite build の `VITE_SENTRY_DSN` | Web build |
-| GitHub Secrets | `SENTRY_AUTH_TOKEN` | CI の `SENTRY_AUTH_TOKEN` | source map upload |
-| GitHub Variables | `SENTRY_ORG` | CI の `SENTRY_ORG` | source map upload |
-| GitHub Variables | `SENTRY_PROJECT_API` | CI の `SENTRY_PROJECT_API` | API release 紐付け |
-| GitHub Variables | `SENTRY_PROJECT_WEB` | CI の `SENTRY_PROJECT_WEB` | Web source map upload |
+| 保管場所           | Secret / Variable 名 | 渡す先の環境変数名              | 用途                  |
+| ------------------ | -------------------- | ------------------------------- | --------------------- |
+| GCP Secret Manager | `SENTRY_API_DSN`     | Cloud Run の `SENTRY_DSN`       | API runtime           |
+| GitHub Secrets     | `SENTRY_WEB_DSN`     | Vite build の `VITE_SENTRY_DSN` | Web build             |
+| GitHub Secrets     | `SENTRY_AUTH_TOKEN`  | CI の `SENTRY_AUTH_TOKEN`       | source map upload     |
+| GitHub Variables   | `SENTRY_ORG`         | CI の `SENTRY_ORG`              | source map upload     |
+| GitHub Variables   | `SENTRY_PROJECT_API` | CI の `SENTRY_PROJECT_API`      | API release 紐付け    |
+| GitHub Variables   | `SENTRY_PROJECT_WEB` | CI の `SENTRY_PROJECT_WEB`      | Web source map upload |
 
 ## 4xx / 5xx の扱い
 
