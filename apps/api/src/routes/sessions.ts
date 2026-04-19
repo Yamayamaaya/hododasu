@@ -1,6 +1,7 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { createRoute } from '@hono/zod-openapi';
 import { z } from 'zod';
+import * as Sentry from '@sentry/node';
 import { db } from '../db';
 import { sessions, sessionParticipants } from '../db/schema';
 import { eq } from 'drizzle-orm';
@@ -117,6 +118,7 @@ sessionsRouter.openapi(createSessionRoute, async (c) => {
 
     return c.json({ editId }, 201);
   } catch (error) {
+    Sentry.captureException(error);
     console.error('Error creating session:', error);
     return c.json({ error: 'Failed to create session' }, 500);
   }
@@ -230,6 +232,7 @@ sessionsRouter.openapi(getSessionRoute, async (c) => {
       200 as const
     );
   } catch (error) {
+    Sentry.captureException(error);
     console.error('Error fetching session:', error);
     return c.json({ error: 'Failed to fetch session' }, 500);
   }
@@ -441,6 +444,7 @@ sessionsRouter.openapi(
         200 as const
       );
     } catch (error) {
+      Sentry.captureException(error);
       console.error('Error updating session:', error);
       return c.json({ error: 'Failed to update session' }, 500);
     }
@@ -560,6 +564,7 @@ sessionsRouter.openapi(getSessionByResultIdRoute, async (c) => {
       200 as const
     );
   } catch (error) {
+    Sentry.captureException(error);
     console.error('Error fetching session:', error);
     return c.json({ error: 'Failed to fetch session' }, 500);
   }
@@ -621,6 +626,7 @@ sessionsRouter.openapi(deleteSessionRoute, async (c) => {
 
     return c.json({ message: 'Session deleted' }, 200);
   } catch (error) {
+    Sentry.captureException(error);
     console.error('Error deleting session:', error);
     return c.json({ error: 'Failed to delete session' }, 500);
   }

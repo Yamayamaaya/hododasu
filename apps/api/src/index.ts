@@ -1,6 +1,7 @@
 // 環境変数を最初に読み込む
 import './config/env';
 import { env } from './config/env';
+import * as Sentry from '@sentry/node';
 import { OpenAPIHono, $ } from '@hono/zod-openapi';
 import { serve } from '@hono/node-server';
 import { swaggerUI } from '@hono/swagger-ui';
@@ -25,6 +26,13 @@ baseApp.use(
 
 // OpenAPIHono型に復元
 const app = $(baseApp);
+
+// 未捕捉エラーをSentryに送信
+app.onError((err, c) => {
+  Sentry.captureException(err);
+  console.error('Unhandled error:', err);
+  return c.json({ error: 'Internal Server Error' }, 500);
+});
 
 // ヘルスチェック
 app.get('/health', (c) => {
@@ -58,8 +66,16 @@ app.doc('/doc', {
 app.get('/swagger', swaggerUI({ url: '/doc' }));
 
 const directClient = getDirectClient();
-await migrate(drizzle(directClient), { migrationsFolder: './drizzle' });
-await directClient.end();
+try {
+  await migrate(drizzle(directClient), { migrationsFolder: './drizzle' });
+} catch (error) {
+  Sentry.captureException(error);
+  console.error('Migration failed:', error);
+  await Sentry.flush(5000);
+  process.exit(1);
+} finally {
+  await directClient.end();
+}
 
 const port = env.PORT;
 
